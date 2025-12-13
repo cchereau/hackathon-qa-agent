@@ -1,0 +1,36 @@
+﻿+--- .vscode
+|   +--- settings.json
++--- backend
+|   +--- data_client
+|   |   +--- bitbucket_client.py
+|   |   +--- jira_client.py
+|   |   +--- xray_client.py
+|   +--- llm_client
+|   |   +--- llm_agent.py
+|   |   +--- llm_client.py
+|   |   +--- models.py
+|   +--- config.py
+|   +--- main.py
+|   +--- metrics.py
+|   +--- utils.py
+|   +--- __init__.py
++--- frontend
+|   +--- app.js
+|   +--- index.html
++--- mocks
+|   +--- bitbulket
+|   |   +--- changes_by_jira_key.json
+|   +--- jira
+|   |   +--- issues.json
+|   +--- xray
+|   |   +--- tests_by_requirement.json
+|   |   +--- test_plans.json
++--- .env
++--- .env.example
++--- hakathon.zip
++--- pyproject.toml
++--- README.md
++--- requirements.txt
++--- setup.cfg
++--- structure.txt
++--- __init__.py

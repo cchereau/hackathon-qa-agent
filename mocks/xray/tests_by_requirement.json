@@ -1,0 +1,40 @@
+{
+  "PROJ-101": [
+    {
+      "key": "TEST-101-1",
+      "summary": "Login success with valid credentials",
+      "steps": "Given a registered user with a valid email and password\nWhen the user submits the login form\nThen the user is redirected to the dashboard"
+    },
+    {
+      "key": "TEST-101-2",
+      "summary": "Login fails with invalid password",
+      "steps": "Given a registered user with a valid email and an invalid password\nWhen the user submits the login form\nThen an error message is displayed and no session is created"
+    }
+  ],
+  "PROJ-102": [
+    {
+      "key": "TEST-102-1",
+      "summary": "Request password reset with registered email",
+      "steps": "Given a registered email address\nWhen the user requests a password reset\nThen a reset email is sent to that address"
+    }
+  ],
+  "PROJ-201": [
+    {
+      "key": "TEST-201-1",
+      "summary": "Search test cases by keyword",
+      "steps": "Given several test cases with the keyword 'login' in the title\nWhen the QA searches for 'login'\nThen all tests containing 'login' in the title are listed"
+    },
+    {
+      "key": "TEST-201-2",
+      "summary": "Search test cases by tag 'regression'",
+      "steps": "Given test cases tagged as 'regression'\nWhen the QA filters by tag 'regression'\nThen only tests with this tag are displayed"
+    }
+  ],
+  "PROJ-301": [
+    {
+      "key": "TEST-301-1",
+      "summary": "Bulk import valid CSV",
+      "steps": "Given a CSV file with valid test case rows\nWhen the QA uploads the file\nThen all rows are imported as test cases without error"
+    }
+  ]
+}

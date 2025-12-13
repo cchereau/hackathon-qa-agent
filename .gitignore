@@ -1,0 +1,59 @@
+# ============================================================
+# MyLeasingGraph — .gitignore (version clean & minimale)
+# ============================================================
+
+# -----------------------------
+# 1) Python / Virtualenv
+# -----------------------------
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# -----------------------------
+# 2) Secrets / config locales
+# -----------------------------
+.env
+.env.*
+docker/.env
+
+# On veut versionner le template prod
+!/.env.sample
+
+# -----------------------------
+# 3) DATA_ROOT (data/)
+# -----------------------------
+# Ignorer TOUT le dossier data/
+data/*
+
+# Mais réactiver data/
+!data/
+
+# Ne versionner *QUE* data/config/prompts/**
+!data/config/
+!data/config/prompts/
+!data/config/prompts/**
+
+# -----------------------------
+# 4) Node / Front (UI)
+# -----------------------------
+node_modules/
+dist/
+build/
+
+# -----------------------------
+# 5) IDE / OS
+# -----------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# -----------------------------
+# 6) Logs / temp
+# -----------------------------
+*.log
+logs/
+tmp/
+*.tmp

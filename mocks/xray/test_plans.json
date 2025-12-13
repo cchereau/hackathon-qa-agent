@@ -1,0 +1,14 @@
+[
+  {
+    "key": "TP-REG-LOGIN",
+    "summary": "Regression test plan for login and password reset",
+    "jira_keys": ["PROJ-101", "PROJ-102"],
+    "tests": ["TEST-101-1", "TEST-101-2", "TEST-102-1"]
+  },
+  {
+    "key": "TP-REG-SEARCH-IMPORT",
+    "summary": "Regression test plan for search and bulk import",
+    "jira_keys": ["PROJ-201", "PROJ-301"],
+    "tests": ["TEST-201-1", "TEST-201-2", "TEST-301-1"]
+  }
+]
