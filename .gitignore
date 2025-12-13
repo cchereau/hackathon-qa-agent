@@ -6,6 +6,7 @@
 # 1) Python / Virtualenv
 # -----------------------------
 .venv/
+ venv/
 __pycache__/
 *.pyc
 *.pyo
@@ -17,6 +18,7 @@ __pycache__/
 .env
 .env.*
 docker/.env
+ 
 
 # On veut versionner le template prod
 !/.env.sample
