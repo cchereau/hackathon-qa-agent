@@ -10,7 +10,7 @@ class TestPlanRequest(BaseModel):
     """
     Request used by /agent/test-plan
     """
-    jira_key: str = Field(..., description="Clé Jira, ex: PROJ-123")
+    jira_key: str = Field(..., description="Clé Jira au format US-XXX (ex: US-402)")
 
 
 # ─────────────────────────────────────────────────────────────

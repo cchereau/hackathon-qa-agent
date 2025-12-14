@@ -16,7 +16,7 @@ router = APIRouter(tags=["agent"])
 
 
 class TestPlanRequest(BaseModel):
-    jira_key: str = Field(..., description="Clé Jira, ex: PROJ-401")
+    jira_key: str = Field(..., description="Clé Jira au format US-XXX (ex: US-402)")
 
 
 @router.post("/agent/test-plan")

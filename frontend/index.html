@@ -2,200 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>QA Test Plan Agent</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 1.5rem;
-      background: #f5f5f5;
-    }
-    .container {
-      max-width: 1080px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      position: relative;
-    }
-    h1 { margin-top: 0; }
-    label { font-weight: 600; margin-right: 0.25rem; }
-    select, input[type="text"] {
-      padding: 0.5rem;
-      font-size: 1rem;
-      margin-right: 0.5rem;
-      min-width: 220px;
-    }
-    button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      cursor: pointer;
-      margin-right: 0.5rem;
-    }
-    #status { margin-top: 1rem; font-size: 0.9rem; }
-
-    .top-tabs {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-    .top-tab-btn {
-      border: 1px solid #e5e5e5;
-      background: #fafafa;
-      border-radius: 999px;
-      padding: 0.4rem 0.8rem;
-      font-size: 0.95rem;
-      cursor: pointer;
-    }
-    .top-tab-btn.active {
-      background: #111;
-      color: #fff;
-      border-color: #111;
-    }
-
-    .panel { display: none; }
-    .panel.active { display: block; }
-
-    pre {
-      background: #1e1e1e;
-      color: #f0f0f0;
-      padding: 1rem;
-      border-radius: 6px;
-      overflow-x: auto;
-      white-space: pre-wrap;
-    }
-
-    /* Simple table for test plans */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 0.75rem;
-      font-size: 0.95rem;
-    }
-    th, td {
-      border-bottom: 1px solid #eee;
-      padding: 0.6rem 0.5rem;
-      text-align: left;
-      vertical-align: top;
-    }
-    th { background: #fafafa; font-weight: 700; }
-    .muted { color: #666; }
-    .badge {
-      display: inline-block;
-      padding: 0.2rem 0.55rem;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      border: 1px solid #ddd;
-      background: #f7f7f7;
-    }
-    .badge.gray { background: #f5f5f5; }
-    .badge.green { background: #eaffea; border-color: #b5e6b5; }
-    .badge.orange { background: #fff2e6; border-color: #ffd2a8; }
-
-    /* Drawer */
-    .drawer-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.35);
-      display: none;
-      z-index: 999;
-    }
-    .drawer {
-      position: fixed;
-      top: 0;
-      right: 0;
-      height: 100vh;
-      width: min(46vw, 760px);
-      max-width: 760px;
-      background: #ffffff;
-      box-shadow: -6px 0 18px rgba(0,0,0,0.18);
-      transform: translateX(100%);
-      transition: transform 180ms ease;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-    }
-    .drawer.open { transform: translateX(0); }
-    .drawer-backdrop.open { display: block; }
-
-    .drawer-header {
-      padding: 1rem 1rem 0.75rem 1rem;
-      border-bottom: 1px solid #e8e8e8;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-    }
-    .drawer-title { font-weight: 700; font-size: 1.05rem; }
-    .drawer-subtitle { font-size: 0.85rem; color: #666; margin-top: 0.15rem; }
-    .drawer-actions button { padding: 0.4rem 0.7rem; font-size: 0.9rem; }
-
-    .drawer-tabs {
-      display: flex;
-      gap: 0.25rem;
-      padding: 0.75rem 1rem 0 1rem;
-      border-bottom: 1px solid #efefef;
-      flex-wrap: wrap;
-    }
-    .tab-btn {
-      border: 1px solid #e5e5e5;
-      background: #fafafa;
-      border-radius: 999px;
-      padding: 0.35rem 0.7rem;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-    .tab-btn.active { background: #111; color: #fff; border-color: #111; }
-
-    .drawer-body { padding: 1rem; overflow: auto; flex: 1; }
-
-    .viewer-toolbar {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .viewer-toolbar button { padding: 0.35rem 0.6rem; font-size: 0.85rem; }
-    .viewer-toolbar select { padding: 0.35rem 0.5rem; font-size: 0.9rem; min-width: 160px; }
-    .viewer-pre {
-      background: #1e1e1e;
-      color: #f0f0f0;
-      padding: 0.9rem;
-      border-radius: 6px;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      margin: 0;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hackathon QA Test Plan Agent (T0)</title>
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>QA Test Plan Agent</h1>
+  <header>
+    <h1>Hackathon QA Test Plan Agent – T0</h1>
+    <p class="muted">Issue Generator (G1/G2) + Xray Preview + Test Plans Governance (G4)</p>
+  </header>
 
-    <div class="top-tabs">
-      <button class="top-tab-btn active" data-panel="issue" onclick="setTopPanel('issue')">Issue Generator</button>
-      <button class="top-tab-btn" data-panel="plans" onclick="setTopPanel('plans')">Test Plans (G4)</button>
-    </div>
+  <div class="container">
+    <nav class="tabs">
+      <button id="tab-issue" class="tab active" onclick="showPanel('issue')">Issue Generator (G1/G2)</button>
+      <button id="tab-plans" class="tab" onclick="showPanel('plans')">Test Plans (G4)</button>
+    </nav>
 
     <!-- =========================
          PANEL 1: Issue Generator
          ========================= -->
     <section id="panel-issue" class="panel active">
-      <p>Select a Jira issue key (e.g. <code>PROJ-401</code>) and let the agent generate a test plan.</p>
+      <p class="muted">
+        Select a User Story (US-xxx), generate suggestions with the LLM, then export the run so G4 can consume it.
+      </p>
 
-      <div>
-        <label for="jiraKeySelect">Jira Key:</label>
-        <select id="jiraKeySelect">
-          <option value="">Loading keys...</option>
-        </select>
+      <div class="row">
+        <div>
+          <label for="jiraKeySelect">Jira key:</label>
+          <select id="jiraKeySelect"></select>
+        </div>
 
-        <button onclick="generate()">Generate Test Plan</button>
-        <button onclick="openInspector()">Open Inspector</button>
+        <div class="btn-row">
+          <button onclick="generate()">Generate (LLM)</button>
+          <button id="exportBtn" onclick="exportRun()" disabled>Export run (G1/G2 → G4)</button>
+          <button onclick="openInspector()">Open Inspector</button>
+        </div>
       </div>
 
       <div id="status"></div>
@@ -212,15 +53,15 @@
          ========================= -->
     <section id="panel-plans" class="panel">
       <p class="muted">
-        Browse existing test plans (campaigns), select an overlay (promptA/promptB), open details and run “Enrich” to generate the overlay file.
+        Browse existing test plans (campaigns). Select an <b>overlay</b> to preview governance without touching baseline.
+        <br />
+        <b>Run overlays</b> (US-xxx) are computed (read-only, Pattern A). <b>File overlays</b> are G4 governance (persisted).
       </p>
 
       <div>
         <label for="overlaySelect">Overlay:</label>
         <select id="overlaySelect" onchange="loadTestPlans()">
           <option value="">none</option>
-          <option value="promptA">promptA</option>
-          <option value="promptB">promptB</option>
         </select>
 
         <button onclick="loadTestPlans()">Refresh Plans</button>
@@ -254,6 +95,7 @@
         <div class="drawer-title">Inspector</div>
         <div class="drawer-subtitle">
           Context for: <code id="inspectorKey">—</code>
+          <span id="inspectorRole" class="muted" style="margin-left:0.5rem;"></span>
         </div>
       </div>
       <div class="drawer-actions">
@@ -262,32 +104,33 @@
       </div>
     </div>
 
+    <!-- Tabs are role-filtered by JS -->
     <div class="drawer-tabs" id="drawerTabs">
-      <!-- Issue tabs (existing) -->
-      <button class="tab-btn active" data-tab="jira" onclick="setInspectorTab('jira')">Jira</button>
-      <button class="tab-btn" data-tab="xray" onclick="setInspectorTab('xray')">Xray</button>
-      <button class="tab-btn" data-tab="bitbucket" onclick="setInspectorTab('bitbucket')">Bitbucket</button>
-      <button class="tab-btn" data-tab="prompt" onclick="setInspectorTab('prompt')">Prompt</button>
-
-      <!-- Plans tab (new) -->
-      <button class="tab-btn" data-tab="plan" onclick="setInspectorTab('plan')">Plan</button>
+      <button id="tabJiraBtn" class="tab-btn active" data-tab="jira" onclick="setInspectorTab('jira')">Jira</button>
+      <button id="tabXrayBtn" class="tab-btn" data-tab="xray" onclick="setInspectorTab('xray')">Xray</button>
+      <button id="tabBitbucketBtn" class="tab-btn" data-tab="bitbucket" onclick="setInspectorTab('bitbucket')">Bitbucket</button>
+      <button id="tabPromptBtn" class="tab-btn" data-tab="prompt" onclick="setInspectorTab('prompt')">Prompt</button>
+      <button id="tabPlanBtn" class="tab-btn" data-tab="plan" onclick="setInspectorTab('plan')">Plan</button>
     </div>
 
     <div class="drawer-body">
       <div class="viewer-toolbar">
-        <select id="drawerOverlaySelect" onchange="onDrawerOverlayChange()">
-          <option value="">Overlay: none</option>
-          <option value="promptA">Overlay: promptA</option>
-          <option value="promptB">Overlay: promptB</option>
-        </select>
+        <!-- Overlay selector is only meaningful for G4 / plan mode.
+             In G1/G2 mode we either hide it or show only the run for the current US. -->
+        <span id="drawerOverlayWrap">
+          <select id="drawerOverlaySelect" onchange="onDrawerOverlayChange()">
+            <option value="">Overlay: none</option>
+          </select>
+        </span>
+
         <button id="enrichBtn" onclick="enrichCurrentPlan()" style="display:none;">Enrich (G4)</button>
-        <button onclick="copyInspector()">Copy</button>
+        <button id="copyBtn" onclick="copyInspector()">Copy</button>
       </div>
 
       <pre id="inspectorContent" class="viewer-pre">Open the inspector to load data.</pre>
     </div>
   </aside>
 
-  <script src="app.js"></script>
+  <script src="/app.js"></script>
 </body>
 </html>

@@ -1,12 +1,10 @@
-# backup/utils.py
 """
-Utility helpers used across the backend (now located in backup/).
+Utility helpers used across the backend.
 
 Goals:
 - Load .env deterministically (repo root)
 - Resolve absolute paths reliably on all OS (always relative to repo root)
 - Provide JSON-file helpers with clear errors
-- Avoid "double hackathon/" path bugs
 
 IMPORTANT:
 - The repository root is the folder that contains `.env`, `backend/`, `frontend/`, `mocks/`, etc.
@@ -15,6 +13,7 @@ IMPORTANT:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import pathlib
@@ -26,154 +25,153 @@ from typing import Any, Dict, Union
 # ----------------------------------------------------------------------
 def _find_repo_root(start: pathlib.Path) -> pathlib.Path:
     """
-    Walk up from `start` to find a folder that looks like the project root.
-
-    Markers we accept:
-    - `.env` (preferred)
-    - `pyproject.toml`
-    - `README.md`
-
-    Fallback:
-    - best-effort parent of this file (safe for backup/utils.py layout)
+    Walk up from `start` until we find a folder containing:
+    - backend/
+    - mocks/
+    or a `.env` marker.
     """
-    markers = {".env", "pyproject.toml", "README.md"}
-    for p in [start, *start.parents]:
-        if any((p / m).exists() for m in markers):
+    start = start.resolve()
+    for p in [start] + list(start.parents):
+        if (p / "backend").is_dir() and (p / "mocks").is_dir():
             return p
-
-    # Safe fallback: go up enough so it still works even if "backup/" is nested
-    # (avoid IndexError if path is shallow)
-    parents = list(start.parents)
-    return parents[1] if len(parents) > 1 else start.parent
-
-
-REPO_ROOT = _find_repo_root(pathlib.Path(__file__).resolve())
-
-try:
-    from dotenv import load_dotenv  # type: ignore
-
-    load_dotenv(dotenv_path=REPO_ROOT / ".env")
-except Exception:  # pragma: no cover – dotenv optional
-    pass
+        if (p / ".env").is_file():
+            return p
+    # Fallback: assume 2 levels up from backend/...
+    return start.parents[1] if len(start.parents) >= 2 else start
 
 
-# ----------------------------------------------------------------------
-# 2) Helper: env var (or default) -> absolute Path
-# ----------------------------------------------------------------------
-def _env_path(key: str, default: Union[str, pathlib.Path]) -> pathlib.Path:
+REPO_ROOT = _find_repo_root(pathlib.Path(__file__).parent)
+PROJECT_ROOT = REPO_ROOT  # alias kept for backward compatibility
+
+MOCK_ROOT = REPO_ROOT / "mocks"
+JIRA_MOCK_DIR = MOCK_ROOT / "jira"
+XRAY_MOCK_DIR = MOCK_ROOT / "xray"
+BITBUCKET_MOCK_DIR = MOCK_ROOT / "bitbucket"
+
+
+JIRA_ISSUES_FILE = JIRA_MOCK_DIR / "issues.json"
+XRAY_TESTS_FILE = XRAY_MOCK_DIR / "tests_by_requirement.json"
+XRAY_PLANS_FILE = XRAY_MOCK_DIR / "test_plans.json"
+BITBUCKET_CHANGES_FILE = BITBUCKET_MOCK_DIR / "changes_by_jira_key.json"
+
+PROMPT_DIR = MOCK_ROOT / "prompts"
+PROMPT_STORE_DIR = PROMPT_DIR / "prompts"
+PROMPT_REGISTRY_FILE = PROMPT_DIR / "prompt_registry.json"
+
+
+def debug_print_env() -> Dict[str, str]:
     """
-    Return a pathlib.Path guaranteed to be absolute.
-
-    - If env var `key` is missing, fallback to `default`
-    - Relative values are interpreted as relative to REPO_ROOT
+    Helper for /diag endpoints: return a shallow view of env vars.
     """
-    raw = os.getenv(key, str(default)).strip()
-    p = pathlib.Path(raw)
+    keys = [
+        "OPENAI_API_KEY",
+        "OPENAI_BASE_URL",
+        "OPENAI_MODEL",
+        "LLM_PROVIDER",
+    ]
+    return {k: os.getenv(k, "") for k in keys}
 
-    if not p.is_absolute():
-        p = REPO_ROOT / p
-
-    return p.resolve()
-
-
-# ----------------------------------------------------------------------
-# 3) Constants imported across the codebase
-# ----------------------------------------------------------------------
-# Project root: repo root (no extra /hackathon!)
-PROJECT_ROOT: pathlib.Path = REPO_ROOT
-
-# Mock data root – defaults to <repo>/mocks
-MOCK_ROOT: pathlib.Path = _env_path("MOCK_ROOT", "mocks")
-
-# Sub-folders (note: your tree is "bitbulket" in mocks; we support both)
-JIRA_MOCK_DIR: pathlib.Path = _env_path("JIRA_MOCK_DIR", MOCK_ROOT / "jira")
-XRAY_MOCK_DIR: pathlib.Path = _env_path("XRAY_MOCK_DIR", MOCK_ROOT / "xray")
-
-# Support both spellings: bitbucket vs bitbulket
-_default_bb_dir = MOCK_ROOT / ("bitbucket" if (MOCK_ROOT / "bitbucket").exists() else "bitbulket")
-BITBUCKET_MOCK_DIR: pathlib.Path = _env_path("BITBUCKET_MOCK_DIR", _default_bb_dir)
-
-# Individual JSON files
-JIRA_ISSUES_FILE: pathlib.Path = _env_path("JIRA_ISSUES_FILE", JIRA_MOCK_DIR / "issues.json")
-XRAY_TESTS_FILE: pathlib.Path = _env_path("XRAY_TESTS_FILE", XRAY_MOCK_DIR / "tests_by_requirement.json")
-XRAY_PLANS_FILE: pathlib.Path = _env_path("XRAY_PLANS_FILE", XRAY_MOCK_DIR / "test_plans.json")
-BITBUCKET_CHANGES_FILE: pathlib.Path = _env_path(
-    "BITBUCKET_CHANGES_FILE", BITBUCKET_MOCK_DIR / "changes_by_jira_key.json"
-)
 
 # ----------------------------------------------------------------------
-# 3b) Test plans overlays: stored next to test_plans.json
+# 2) Xray overlays file naming
 # ----------------------------------------------------------------------
 def xray_plans_overlay_file(overlay_name: str) -> pathlib.Path:
     """
-    Return the overlay file path stored next to mocks/xray/test_plans.json.
+    Overlay path stored next to XRAY_PLANS_FILE.
 
-    Example:
-      overlay_name = "promptA"
-      -> mocks/xray/test_plans_enriched.promptA.json
+    Format:
+      test_plans_enriched.<overlay_name>.json
     """
-    safe = (overlay_name or "default").strip()
-    safe = "".join(ch for ch in safe if ch.isalnum() or ch in ("-", "_", "."))
-    if not safe:
-        safe = "default"
-    return XRAY_MOCK_DIR / f"test_plans_enriched.{safe}.json"
+    name = (overlay_name or "").strip()
+    if not name:
+        name = "default"
+    return XRAY_MOCK_DIR / f"test_plans_enriched.{name}.json"
 
 
 # ----------------------------------------------------------------------
-# 4) JSON helpers
+# 3) JSON file I/O helpers
 # ----------------------------------------------------------------------
-def load_json_file(path: pathlib.Path) -> Any:
+PathLike = Union[str, pathlib.Path]
+
+
+def load_json_file(path: PathLike) -> Any:
     """
-    Read a JSON file and return its content.
+    Read JSON from disk.
 
     Note:
-    - Some files are dicts (issues.json, tests_by_requirement.json, changes_by_jira_key.json)
-    - Some files are lists (test_plans.json)
-    So we return Any and let callers validate type.
+    - returns Any (dict or list), so callers should validate types.
     """
-    if not path.is_file():
-        raise FileNotFoundError(f"Mock file not found: {path}")
+    p = pathlib.Path(path)
+    if not p.is_file():
+        raise FileNotFoundError(f"Mock file not found: {p}")
 
-    with path.open("r", encoding="utf-8") as f:
+    with p.open("r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def save_json_file(path: pathlib.Path, content: Any) -> None:
+def save_json_file(path: PathLike, content: Any) -> None:
     """
     Write JSON deterministically (UTF-8, pretty-print for hackathon readability).
     """
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as f:
-        json.dump(content, f, ensure_ascii=False, indent=2)
+    p = pathlib.Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("w", encoding="utf-8") as f:
+        json.dump(content, f, indent=2, ensure_ascii=False)
 
 
 # ----------------------------------------------------------------------
-# 5) Debug helper (optional)
+# 4) JUNCTION + PROMPTS (new, added without breaking legacy)
 # ----------------------------------------------------------------------
-def debug_print_env() -> None:  # pragma: no cover
-    """Print all computed constants – handy while developing."""
-    print("=== ENV DEBUG ===")
-    print(f"CWD: {pathlib.Path.cwd()}")
-    for name in [
-        "REPO_ROOT",
-        "PROJECT_ROOT",
-        "MOCK_ROOT",
-        "JIRA_MOCK_DIR",
-        "XRAY_MOCK_DIR",
-        "BITBUCKET_MOCK_DIR",
-        "JIRA_ISSUES_FILE",
-        "XRAY_TESTS_FILE",
-        "XRAY_PLANS_FILE",
-        "BITBUCKET_CHANGES_FILE",
+JUNCTION_DIR = MOCK_ROOT / "junction"
+JUNCTION_RUNS_DIR = JUNCTION_DIR / "runs"
+JUNCTION_SNAPSHOTS_DIR = JUNCTION_DIR / "snapshots"
+
+PROMPTS_DIR = MOCK_ROOT / "prompts"
+PROMPTS_STORE_DIR = PROMPTS_DIR / "prompts"
+PROMPT_REGISTRY_FILE = PROMPTS_DIR / "prompt_registry.json"
+
+G12_SNAPSHOT_FILE = JUNCTION_SNAPSHOTS_DIR / "g12_suggestions.snapshot.json"
+
+
+def ensure_dirs() -> None:
+    """
+    Create required folders if missing. Safe to call multiple times.
+    """
+    for d in [
+        JUNCTION_RUNS_DIR,
+        JUNCTION_SNAPSHOTS_DIR,
+        PROMPTS_STORE_DIR,
     ]:
-        print(f"{name}: {globals()[name]}")
-    print("=================")
+        d.mkdir(parents=True, exist_ok=True)
 
 
-# ----------------------------------------------------------------------
-# Exported symbols – makes `from backup.utils import …` tidy
-# ----------------------------------------------------------------------
+def sha256_text(text: str) -> str:
+    """
+    Return a stable sha256 identifier formatted as 'sha256:<hex>'.
+    """
+    h = hashlib.sha256()
+    h.update((text or "").encode("utf-8"))
+    return f"sha256:{h.hexdigest()}"
+
+
+def prompt_store_file(prompt_hash: str) -> pathlib.Path:
+    """
+    File path where a prompt version is stored.
+    """
+    safe = (prompt_hash or "").replace("sha256:", "").strip()
+    return PROMPTS_STORE_DIR / f"{safe}.json"
+
+
+def run_file(jira_key: str) -> pathlib.Path:
+    """
+    Run file path for a given Jira key.
+    """
+    key = (jira_key or "").strip()
+    return JUNCTION_RUNS_DIR / f"{key}.run.json"
+
+
 __all__ = [
+    # legacy exports (MUST keep)
     "REPO_ROOT",
     "PROJECT_ROOT",
     "MOCK_ROOT",
@@ -188,4 +186,16 @@ __all__ = [
     "load_json_file",
     "save_json_file",
     "debug_print_env",
+    # new exports (junction/prompts)
+    "JUNCTION_DIR",
+    "JUNCTION_RUNS_DIR",
+    "JUNCTION_SNAPSHOTS_DIR",
+    "PROMPTS_DIR",
+    "PROMPT_STORE_DIR",
+    "PROMPT_REGISTRY_FILE",
+    "G12_SNAPSHOT_FILE",
+    "ensure_dirs",
+    "sha256_text",
+    "prompt_store_file",
+    "run_file",
 ]

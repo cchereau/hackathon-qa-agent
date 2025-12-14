@@ -14,6 +14,7 @@
 |   |   +--- agent_routes.py
 |   |   +--- diag_routes.py
 |   |   +--- jira_project_routes.py
+|   |   +--- junction_routes.py
 |   |   +--- test_plans_routes.py
 |   |   +--- viewer_routes.py
 |   |   +--- __init__.py
@@ -27,24 +28,28 @@
 |   +--- app.js
 |   +--- index.html
 +--- mocks
-|   +--- bitbulket
+|   +--- bitbucket
 |   |   +--- changes_by_jira_key.json
 |   +--- jira
 |   |   +--- issues.json
+|   +--- junction
+|   |   +--- runs
+|   |   |   +--- US-402.run.json
+|   |   |   +--- US-403.run.json
+|   |   |   +--- US-406.run.json
+|   |   |   +--- US-408.run.json
+|   |   +--- snapshots
+|   |   |   +--- g12_suggestions.snapshot.json
+|   +--- prompts
+|   |   +--- prompts
+|   |   |   +--- 0ad9410b355e2ee7982fa2275920c9166175fa3118a3a50dcecbcc76aa110136.json
+|   |   |   +--- 176a1d430c3bb652f5798d7a6f1db6eddbb10c746e87daf3faa230b51c3f0aa8.json
+|   |   |   +--- 6df317e4d541abafa76e39a9f541f243beb7ec44be717bd11f53f730064c57d2.json
+|   |   |   +--- fa49ce91099a489c0611d7414bcd723a89eb1e55378fdf226eb13a8ec0dbf5fc.json
+|   |   +--- prompt_registry.json
 |   +--- xray
 |   |   +--- tests_by_requirement.json
 |   |   +--- test_plans.json
-|   +--- Scripts
-|   |   +--- activate
-|   |   +--- activate.bat
-|   |   +--- Activate.ps1
-|   |   +--- deactivate.bat
-|   |   +--- pip.exe
-|   |   +--- pip3.11.exe
-|   |   +--- pip3.exe
-|   |   +--- python.exe
-|   |   +--- pythonw.exe
-|   +--- pyvenv.cfg
 +--- .env
 +--- .env.example
 +--- .gitignore
