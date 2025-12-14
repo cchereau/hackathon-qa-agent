@@ -13,10 +13,13 @@ IMPORTANT:
 - We do NOT append "/hackathon" to the root; your repo is already that folder.
 """
 
-import os
+from __future__ import annotations
+
 import json
+import os
 import pathlib
 from typing import Any, Dict, Union
+
 
 # ----------------------------------------------------------------------
 # 1) Repo root resolution + .env loading
@@ -24,23 +27,34 @@ from typing import Any, Dict, Union
 def _find_repo_root(start: pathlib.Path) -> pathlib.Path:
     """
     Walk up from `start` to find a folder that looks like the project root.
-    We use markers that exist in your repo: `.env` or `pyproject.toml` or `README.md`.
-    Fallback: parent of this file.
+
+    Markers we accept:
+    - `.env` (preferred)
+    - `pyproject.toml`
+    - `README.md`
+
+    Fallback:
+    - best-effort parent of this file (safe for backup/utils.py layout)
     """
     markers = {".env", "pyproject.toml", "README.md"}
     for p in [start, *start.parents]:
         if any((p / m).exists() for m in markers):
             return p
-    return start.parents[1]  # safe fallback for backup/utils.py layout
 
+    # Safe fallback: go up enough so it still works even if "backup/" is nested
+    # (avoid IndexError if path is shallow)
+    parents = list(start.parents)
+    return parents[1] if len(parents) > 1 else start.parent
+
+
+REPO_ROOT = _find_repo_root(pathlib.Path(__file__).resolve())
 
 try:
     from dotenv import load_dotenv  # type: ignore
 
-    REPO_ROOT = _find_repo_root(pathlib.Path(__file__).resolve())
     load_dotenv(dotenv_path=REPO_ROOT / ".env")
 except Exception:  # pragma: no cover – dotenv optional
-    REPO_ROOT = _find_repo_root(pathlib.Path(__file__).resolve())
+    pass
 
 
 # ----------------------------------------------------------------------
@@ -49,6 +63,7 @@ except Exception:  # pragma: no cover – dotenv optional
 def _env_path(key: str, default: Union[str, pathlib.Path]) -> pathlib.Path:
     """
     Return a pathlib.Path guaranteed to be absolute.
+
     - If env var `key` is missing, fallback to `default`
     - Relative values are interpreted as relative to REPO_ROOT
     """
@@ -86,17 +101,50 @@ BITBUCKET_CHANGES_FILE: pathlib.Path = _env_path(
     "BITBUCKET_CHANGES_FILE", BITBUCKET_MOCK_DIR / "changes_by_jira_key.json"
 )
 
+# ----------------------------------------------------------------------
+# 3b) Test plans overlays: stored next to test_plans.json
+# ----------------------------------------------------------------------
+def xray_plans_overlay_file(overlay_name: str) -> pathlib.Path:
+    """
+    Return the overlay file path stored next to mocks/xray/test_plans.json.
+
+    Example:
+      overlay_name = "promptA"
+      -> mocks/xray/test_plans_enriched.promptA.json
+    """
+    safe = (overlay_name or "default").strip()
+    safe = "".join(ch for ch in safe if ch.isalnum() or ch in ("-", "_", "."))
+    if not safe:
+        safe = "default"
+    return XRAY_MOCK_DIR / f"test_plans_enriched.{safe}.json"
+
 
 # ----------------------------------------------------------------------
-# 4) JSON loader (raises clear FileNotFoundError)
+# 4) JSON helpers
 # ----------------------------------------------------------------------
-def load_json_file(path: pathlib.Path) -> Dict[str, Any]:
-    """Read a JSON file and return its content as a dict."""
+def load_json_file(path: pathlib.Path) -> Any:
+    """
+    Read a JSON file and return its content.
+
+    Note:
+    - Some files are dicts (issues.json, tests_by_requirement.json, changes_by_jira_key.json)
+    - Some files are lists (test_plans.json)
+    So we return Any and let callers validate type.
+    """
     if not path.is_file():
         raise FileNotFoundError(f"Mock file not found: {path}")
 
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def save_json_file(path: pathlib.Path, content: Any) -> None:
+    """
+    Write JSON deterministically (UTF-8, pretty-print for hackathon readability).
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as f:
+        json.dump(content, f, ensure_ascii=False, indent=2)
 
 
 # ----------------------------------------------------------------------
@@ -136,6 +184,8 @@ __all__ = [
     "XRAY_TESTS_FILE",
     "XRAY_PLANS_FILE",
     "BITBUCKET_CHANGES_FILE",
+    "xray_plans_overlay_file",
     "load_json_file",
+    "save_json_file",
     "debug_print_env",
 ]

@@ -1,40 +1,36 @@
 {
-  "PROJ-101": [
-    {
-      "key": "TEST-101-1",
-      "summary": "Login success with valid credentials",
-      "steps": "Given a registered user with a valid email and password\nWhen the user submits the login form\nThen the user is redirected to the dashboard"
-    },
-    {
-      "key": "TEST-101-2",
-      "summary": "Login fails with invalid password",
-      "steps": "Given a registered user with a valid email and an invalid password\nWhen the user submits the login form\nThen an error message is displayed and no session is created"
-    }
+  "US-401": [
+    { "key": "TEST-US-401-1", "summary": "Create lease quote with valid pricing inputs", "steps": "Given a dealer user\nWhen mileage and duration are provided\nThen a quotation is created with monthly rent", "tags": ["functional", "api"] },
+    { "key": "TEST-US-401-2", "summary": "Reject quotation with invalid mileage", "steps": "Given invalid mileage\nWhen creating a quotation\nThen an error message is returned", "tags": ["functional"] },
+    { "key": "TEST-US-401-3", "summary": "Verify residual value calculation", "steps": "Given a quotation\nWhen pricing is calculated\nThen residual value is included", "tags": ["regression", "data"] },
+    { "key": "TEST-US-401-4", "summary": "Outdated: Quote creation without residual value", "steps": "Old pricing flow without residual value", "tags": ["legacy"] }
   ],
-  "PROJ-102": [
-    {
-      "key": "TEST-102-1",
-      "summary": "Request password reset with registered email",
-      "steps": "Given a registered email address\nWhen the user requests a password reset\nThen a reset email is sent to that address"
-    }
+  "US-402": [
+    { "key": "TEST-US-402-1", "summary": "Apply discount below approval threshold", "steps": "Given a quotation\nWhen discount is applied\nThen it is accepted automatically", "tags": ["functional"] },
+    { "key": "TEST-US-402-2", "summary": "Apply discount above approval threshold", "steps": "Given a quotation\nWhen discount exceeds threshold\nThen approval is required", "tags": ["functional", "compliance"] },
+    { "key": "TEST-US-402-3", "summary": "Audit discount approval decision", "steps": "Given a discount approval\nWhen decision is made\nThen audit entry is stored", "tags": ["audit", "compliance"] }
   ],
-  "PROJ-201": [
-    {
-      "key": "TEST-201-1",
-      "summary": "Search test cases by keyword",
-      "steps": "Given several test cases with the keyword 'login' in the title\nWhen the QA searches for 'login'\nThen all tests containing 'login' in the title are listed"
-    },
-    {
-      "key": "TEST-201-2",
-      "summary": "Search test cases by tag 'regression'",
-      "steps": "Given test cases tagged as 'regression'\nWhen the QA filters by tag 'regression'\nThen only tests with this tag are displayed"
-    }
+  "US-403": [
+    { "key": "TEST-US-403-1", "summary": "Receive approved credit decision", "steps": "Given a lease application\nWhen credit is approved\nThen decision is stored", "tags": ["functional"] },
+    { "key": "TEST-US-403-2", "summary": "Receive rejected credit decision with reason", "steps": "Given a lease application\nWhen credit is rejected\nThen reason code is returned", "tags": ["functional"] },
+    { "key": "TEST-US-403-3", "summary": "Verify credit decision audit trail", "steps": "Given a decision\nWhen stored\nThen audit trail exists", "tags": ["audit"] }
   ],
-  "PROJ-301": [
-    {
-      "key": "TEST-301-1",
-      "summary": "Bulk import valid CSV",
-      "steps": "Given a CSV file with valid test case rows\nWhen the QA uploads the file\nThen all rows are imported as test cases without error"
-    }
+  "US-404": [
+    { "key": "TEST-US-404-1", "summary": "Mask customer PII in logs", "steps": "Given customer data\nWhen logs are written\nThen PII fields are masked", "tags": ["security", "compliance"] },
+    { "key": "TEST-US-404-2", "summary": "Restrict access to sensitive customer fields", "steps": "Given unauthorized user\nWhen accessing PII\nThen access is denied", "tags": ["security"] }
+  ],
+  "US-405": [
+    { "key": "TEST-US-405-1", "summary": "Generate contract PDF pack", "steps": "Given a quotation\nWhen generating contract\nThen PDF pack is created", "tags": ["functional"] },
+    { "key": "TEST-US-405-2", "summary": "Complete digital signature workflow", "steps": "Given a contract\nWhen signed digitally\nThen contract is marked as signed", "tags": ["functional"] }
+  ],
+  "US-406": [
+    { "key": "TEST-US-406-1", "summary": "Amend contract mileage and reprice", "steps": "Given an active contract\nWhen mileage is changed\nThen pricing is updated", "tags": ["functional"] }
+  ],
+  "US-407": [
+    { "key": "TEST-US-407-1", "summary": "Generate first invoice after signature", "steps": "Given a signed contract\nWhen invoicing runs\nThen first invoice is generated", "tags": ["functional"] },
+    { "key": "TEST-US-407-2", "summary": "Generate payment schedule", "steps": "Given contract duration\nWhen schedule is generated\nThen installments are created", "tags": ["data"] }
+  ],
+  "US-408": [
+    { "key": "TEST-US-408-1", "summary": "Calculate early termination fees", "steps": "Given a running contract\nWhen early termination is requested\nThen fees are calculated", "tags": ["functional"] }
   ]
 }

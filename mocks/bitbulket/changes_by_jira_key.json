@@ -1,36 +1,113 @@
 {
-  "PROJ-101": [
+  "US-401": [
     {
-      "file_path": "src/auth/login_controller.py",
-      "summary": "Implement email/password login endpoint",
-      "diff_excerpt": "@@ -1,5 +1,15 @@\n+ @router.post('/login')\n+ async def login(email: str, password: str):\n+     user = auth_service.authenticate(email, password)\n+     if not user:\n+         raise HTTPException(status_code=401, detail='Invalid credentials')\n+     return create_session(user)\n"
+      "file_path": "backend/routes/quotation_routes.py",
+      "summary": "Add lease quotation creation endpoint",
+      "diff_excerpt": "POST /quotations now accepts mileage and duration parameters"
     },
     {
-      "file_path": "src/auth/audit_logger.py",
-      "summary": "Add audit logging for login attempts",
-      "diff_excerpt": "@@ -10,0 +10,7 @@\n+ def log_login_attempt(email: str, success: bool):\n+     log.info('login_attempt', extra={\n+         'email': email,\n+         'success': success\n+     })\n"
+      "file_path": "backend/services/pricing_service.py",
+      "summary": "Fix pricing calculation when mileage changes",
+      "diff_excerpt": "Adjusted residual value formula"
+    },
+    {
+      "file_path": "backend/store/quotation_store.py",
+      "summary": "Persist quotation pricing details",
+      "diff_excerpt": "Added fields for total lease cost"
+    },
+    {
+      "file_path": "backend/utils/validation.py",
+      "summary": "Refactor input validation for pricing parameters",
+      "diff_excerpt": "Renamed helper functions"
     }
   ],
-  "PROJ-102": [
+  "US-402": [
     {
-      "file_path": "src/auth/password_reset_service.py",
-      "summary": "Implement password reset token generation",
-      "diff_excerpt": "@@ -1,5 +1,12 @@\n+ def create_reset_token(user_id: str) -> str:\n+     token = secrets.token_urlsafe(32)\n+     save_token(user_id, token)\n+     return token\n"
+      "file_path": "backend/services/discount_service.py",
+      "summary": "Implement dealer discount thresholds",
+      "diff_excerpt": "Added approval threshold logic"
+    },
+    {
+      "file_path": "backend/routes/discount_routes.py",
+      "summary": "Expose discount approval endpoint",
+      "diff_excerpt": "POST /discounts/approve"
+    },
+    {
+      "file_path": "backend/audit/audit_logger.py",
+      "summary": "Log discount approval decisions",
+      "diff_excerpt": "Persist approval decision metadata"
     }
   ],
-  "PROJ-201": [
+  "US-403": [
     {
-      "file_path": "src/tests/search_repository.py",
-      "summary": "Add search by keyword and tags",
-      "diff_excerpt": "@@ -20,0 +20,10 @@\n+ def search_tests(keyword: str | None, tags: list[str] | None):\n+     query = build_query(keyword, tags)\n+     return db.fetch_all(query)\n"
+      "file_path": "backend/services/credit_service.py",
+      "summary": "Integrate external credit decision provider",
+      "diff_excerpt": "Handle approve/reject responses"
+    },
+    {
+      "file_path": "backend/audit/audit_logger.py",
+      "summary": "Store credit decision audit trail",
+      "diff_excerpt": "Added credit_decision table"
+    },
+    {
+      "file_path": "backend/routes/credit_routes.py",
+      "summary": "Expose credit decision endpoint",
+      "diff_excerpt": "POST /credit/check"
     }
   ],
-  "PROJ-301": [
+  "US-404": [
     {
-      "file_path": "src/imports/csv_importer.py",
-      "summary": "Initial CSV parser for bulk test import",
-      "diff_excerpt": "@@ -1,5 +1,14 @@\n+ def import_from_csv(file: IO[str]) -> list[ImportedRowResult]:\n+     reader = csv.DictReader(file)\n+     for row in reader:\n+         # TODO: validate mandatory fields\n+         yield create_test_from_row(row)\n"
+      "file_path": "backend/services/kyc_service.py",
+      "summary": "Persist customer identity data",
+      "diff_excerpt": "Added encryption for sensitive fields"
+    },
+    {
+      "file_path": "backend/logging/log_sanitizer.py",
+      "summary": "Mask PII fields in logs",
+      "diff_excerpt": "Replaced clear text with masked values"
+    }
+  ],
+  "US-405": [
+    {
+      "file_path": "backend/services/contract_service.py",
+      "summary": "Generate contract PDF pack",
+      "diff_excerpt": "Assemble documents from quotation"
+    },
+    {
+      "file_path": "backend/services/signature_service.py",
+      "summary": "Integrate digital signature workflow",
+      "diff_excerpt": "Trigger external signature provider"
+    }
+  ],
+  "US-406": [
+    {
+      "file_path": "backend/services/amendment_service.py",
+      "summary": "Handle contract amendments and repricing",
+      "diff_excerpt": "Recalculate monthly rent"
+    },
+    {
+      "file_path": "backend/audit/audit_logger.py",
+      "summary": "Track amendment history",
+      "diff_excerpt": "Added amendment events"
+    }
+  ],
+  "US-407": [
+    {
+      "file_path": "backend/services/invoicing_service.py",
+      "summary": "Generate first invoice",
+      "diff_excerpt": "Compute first bill amount"
+    },
+    {
+      "file_path": "backend/services/schedule_service.py",
+      "summary": "Create payment schedule",
+      "diff_excerpt": "Generate monthly installments"
+    }
+  ],
+  "US-408": [
+    {
+      "file_path": "backend/services/termination_service.py",
+      "summary": "Compute early termination fees",
+      "diff_excerpt": "Apply penalty rules"
     }
   ]
 }
-

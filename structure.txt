@@ -9,7 +9,16 @@
 |   |   +--- llm_agent.py
 |   |   +--- llm_client.py
 |   |   +--- models.py
+|   |   +--- __init__.py
+|   +--- routes
+|   |   +--- agent_routes.py
+|   |   +--- diag_routes.py
+|   |   +--- jira_project_routes.py
+|   |   +--- test_plans_routes.py
+|   |   +--- viewer_routes.py
+|   |   +--- __init__.py
 |   +--- config.py
+|   +--- errors.py
 |   +--- main.py
 |   +--- metrics.py
 |   +--- utils.py
@@ -25,9 +34,20 @@
 |   +--- xray
 |   |   +--- tests_by_requirement.json
 |   |   +--- test_plans.json
+|   +--- Scripts
+|   |   +--- activate
+|   |   +--- activate.bat
+|   |   +--- Activate.ps1
+|   |   +--- deactivate.bat
+|   |   +--- pip.exe
+|   |   +--- pip3.11.exe
+|   |   +--- pip3.exe
+|   |   +--- python.exe
+|   |   +--- pythonw.exe
+|   +--- pyvenv.cfg
 +--- .env
 +--- .env.example
-+--- hakathon.zip
++--- .gitignore
 +--- pyproject.toml
 +--- README.md
 +--- requirements.txt

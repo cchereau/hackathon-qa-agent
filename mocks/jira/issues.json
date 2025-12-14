@@ -1,26 +1,50 @@
 {
-  "PROJ-101": {
-    "key": "PROJ-101",
-    "summary": "User login with email and password",
-    "description": "As a registered user, I want to log in with my email and password so that I can access my personal dashboard and existing test plans.",
-    "acceptance_criteria": "- Given a registered user with a valid email and password, when they submit the login form, then they are redirected to the dashboard.\n- Given an unregistered email, when the user tries to log in, then an error message is displayed and no session is created.\n- Given a locked account, when the user tries to log in, then an appropriate warning message is displayed and the account remains locked.\n- Login attempts must be logged for audit (user, timestamp, success/failure)."
+  "US-401": {
+    "key": "US-401",
+    "summary": "Create a vehicle lease quotation with pricing parameters",
+    "description": "As a dealer user, I want to create a lease quotation by selecting vehicle, mileage, duration and down payment, so that I can propose a compliant offer to the customer.",
+    "acceptance_criteria": "AC1: The system calculates monthly rent based on vehicle price, mileage and duration.\nAC2: The quotation must include residual value and total cost of leasing.\nAC3: Invalid pricing parameters must be rejected with a clear business message."
   },
-  "PROJ-102": {
-    "key": "PROJ-102",
-    "summary": "Password reset via email link",
-    "description": "As a user who forgot my password, I want to request a reset link so that I can set a new password and log in again.",
-    "acceptance_criteria": "- Given a registered email, when the user requests a password reset, then a reset link is sent to that email.\n- Given an unregistered email, when the user requests a password reset, then a generic message is displayed and no email is sent.\n- Given a valid reset link, when the user sets a new password, then the old password no longer works.\n- A reset link is valid for a limited time and a single use."
+  "US-402": {
+    "key": "US-402",
+    "summary": "Apply dealer discount with approval rules",
+    "description": "As a dealer user, I want to apply a discount on a quotation, so that I can adjust pricing within allowed commercial rules.",
+    "acceptance_criteria": "AC1: Discounts below the threshold are automatically accepted.\nAC2: Discounts above the threshold require manager approval.\nAC3: Discount approval decisions must be auditable."
   },
-  "PROJ-201": {
-    "key": "PROJ-201",
-    "summary": "Search existing test cases by keyword and tag",
-    "description": "As a QA engineer, I want to search existing test cases by keyword, tag and Jira key so that I can quickly reuse or adapt tests for a new User Story.",
-    "acceptance_criteria": "- Given a keyword that exists in multiple test cases, when the QA searches, then the matching tests are listed with key, summary and tags.\n- Given a tag filter (e.g. 'regression' or 'security'), when applied, then only tests with the selected tag are shown.\n- Given a Jira key filter, when applied, then only tests linked to that Jira key are shown.\n- The search should return results within 2 seconds for a dataset of 10,000 tests."
+  "US-403": {
+    "key": "US-403",
+    "summary": "Perform credit decision with audit trail",
+    "description": "As a back office user, I want to receive a credit decision for a lease application, so that financial risk is assessed before contract signature.",
+    "acceptance_criteria": "AC1: Credit decision is received from an external provider.\nAC2: Decision outcome is stored with a timestamp.\nAC3: Rejected decisions must include a reason code."
   },
-  "PROJ-301": {
-    "key": "PROJ-301",
-    "summary": "Bulk import test cases from CSV",
-    "description": "As a QA lead, I want to bulk import test cases from a CSV file so that I can quickly onboard existing manual tests into Xray.",
-    "acceptance_criteria": "- Given a valid CSV file with required columns (title, steps, expected_result, tags), when uploaded, then all valid rows are imported as test cases.\n- Given a CSV with invalid rows (missing mandatory fields), when uploaded, then invalid rows are rejected and listed in an error report.\n- Given a CSV larger than the allowed size, when uploaded, then the user is informed that the file is too large.\n- Import operations must be logged with the number of successful and failed rows."
+  "US-404": {
+    "key": "US-404",
+    "summary": "Capture customer KYC data with PII masking",
+    "description": "As a compliance officer, I want customer personal data to be handled securely, so that PII is not exposed in logs or technical traces.",
+    "acceptance_criteria": "AC1: Customer identity data is stored securely.\nAC2: PII must be masked in application logs.\nAC3: Access to sensitive fields must be restricted."
+  },
+  "US-405": {
+    "key": "US-405",
+    "summary": "Generate and sign leasing contract with document pack",
+    "description": "As a customer, I want to sign my leasing contract digitally, so that the agreement is legally binding.",
+    "acceptance_criteria": "AC1: Contract PDF pack is generated from the quotation.\nAC2: Digital signature workflow must complete successfully.\nAC3: Signed contract is archived."
+  },
+  "US-406": {
+    "key": "US-406",
+    "summary": "Amend an existing contract and trigger repricing",
+    "description": "As a back office user, I want to amend mileage or duration on an active contract, so that pricing is recalculated correctly.",
+    "acceptance_criteria": "AC1: Mileage change triggers a repricing.\nAC2: Amendment history is tracked.\nAC3: Customer must be notified of the new pricing."
+  },
+  "US-407": {
+    "key": "US-407",
+    "summary": "Generate first invoice and payment schedule",
+    "description": "As a finance user, I want the system to generate the first invoice and payment schedule, so that billing is accurate.",
+    "acceptance_criteria": "AC1: First invoice amount matches the signed contract.\nAC2: Payment schedule is generated for the full duration.\nAC3: Invoice data is exportable."
+  },
+  "US-408": {
+    "key": "US-408",
+    "summary": "Provide early termination quotation",
+    "description": "As a customer, I want to request an early termination quote, so that I understand the financial impact.",
+    "acceptance_criteria": null
   }
 }

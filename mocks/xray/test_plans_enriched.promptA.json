@@ -1,0 +1,14 @@
+[
+  {
+    "key": "TP-006",
+    "governance": {
+      "status": "AUTO",
+      "signals": []
+    },
+    "overlay": {
+      "existing_tests_to_execute": [],
+      "existing_tests_to_skip": [],
+      "new_tests_to_create": []
+    }
+  }
+]

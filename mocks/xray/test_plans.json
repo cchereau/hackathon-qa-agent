@@ -1,14 +1,50 @@
 [
   {
-    "key": "TP-REG-LOGIN",
-    "summary": "Regression test plan for login and password reset",
-    "jira_keys": ["PROJ-101", "PROJ-102"],
-    "tests": ["TEST-101-1", "TEST-101-2", "TEST-102-1"]
+    "key": "TP-001",
+    "summary": "Quotation Engine – Core Regression",
+    "jira_keys": ["US-401", "US-402"],
+    "tests": ["TEST-US-401-1", "TEST-US-401-2", "TEST-US-402-1", "TEST-US-402-2", "TEST-US-999-1"]
   },
   {
-    "key": "TP-REG-SEARCH-IMPORT",
-    "summary": "Regression test plan for search and bulk import",
-    "jira_keys": ["PROJ-201", "PROJ-301"],
-    "tests": ["TEST-201-1", "TEST-201-2", "TEST-301-1"]
+    "key": "TP-002",
+    "summary": "Dealer Discounts – Pricing Governance",
+    "jira_keys": ["US-402"],
+    "tests": ["TEST-US-402-1", "TEST-US-402-2", "TEST-US-402-3"]
+  },
+  {
+    "key": "TP-003",
+    "summary": "Credit Decisioning – Compliance & Audit",
+    "jira_keys": ["US-403"],
+    "tests": ["TEST-US-403-1", "TEST-US-403-2", "TEST-US-403-3"]
+  },
+  {
+    "key": "TP-004",
+    "summary": "Contract Signature – End to End",
+    "jira_keys": ["US-405"],
+    "tests": ["TEST-US-405-1", "TEST-US-405-2"]
+  },
+  {
+    "key": "TP-005",
+    "summary": "Amendments – Repricing Validation",
+    "jira_keys": ["US-406"],
+    "tests": ["TEST-US-406-1"]
+  },
+  {
+    "key": "TP-006",
+    "summary": "Invoicing – First Bill and Schedule",
+    "jira_keys": ["US-407"],
+    "tests": ["TEST-US-407-1", "TEST-US-407-2"]
+  },
+  {
+    "key": "TP-007",
+    "summary": "Release Sprint – Leasing End to End",
+    "jira_keys": ["US-401", "US-402", "US-403", "US-405"],
+    "tests": ["TEST-US-401-1", "TEST-US-402-1", "TEST-US-403-1", "TEST-US-405-1"]
+  },
+  {
+    "key": "TP-008",
+    "summary": "Legacy – Discount Policy Pre-2023",
+    "jira_keys": ["US-402"],
+    "tests": ["TEST-US-402-2", "TEST-US-402-99"]
   }
 ]
