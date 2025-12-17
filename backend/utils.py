@@ -48,15 +48,10 @@ JIRA_MOCK_DIR = MOCK_ROOT / "jira"
 XRAY_MOCK_DIR = MOCK_ROOT / "xray"
 BITBUCKET_MOCK_DIR = MOCK_ROOT / "bitbucket"
 
-
 JIRA_ISSUES_FILE = JIRA_MOCK_DIR / "issues.json"
 XRAY_TESTS_FILE = XRAY_MOCK_DIR / "tests_by_requirement.json"
 XRAY_PLANS_FILE = XRAY_MOCK_DIR / "test_plans.json"
 BITBUCKET_CHANGES_FILE = BITBUCKET_MOCK_DIR / "changes_by_jira_key.json"
-
-PROMPT_DIR = MOCK_ROOT / "prompts"
-PROMPT_STORE_DIR = PROMPT_DIR / "prompts"
-PROMPT_REGISTRY_FILE = PROMPT_DIR / "prompt_registry.json"
 
 
 def debug_print_env() -> Dict[str, str]:
@@ -126,9 +121,14 @@ JUNCTION_DIR = MOCK_ROOT / "junction"
 JUNCTION_RUNS_DIR = JUNCTION_DIR / "runs"
 JUNCTION_SNAPSHOTS_DIR = JUNCTION_DIR / "snapshots"
 
+# Canonical prompts paths (single source of truth)
 PROMPTS_DIR = MOCK_ROOT / "prompts"
 PROMPTS_STORE_DIR = PROMPTS_DIR / "prompts"
 PROMPT_REGISTRY_FILE = PROMPTS_DIR / "prompt_registry.json"
+
+# Backward-compatible aliases (keep old names used elsewhere)
+PROMPT_DIR = PROMPTS_DIR
+PROMPT_STORE_DIR = PROMPTS_STORE_DIR
 
 G12_SNAPSHOT_FILE = JUNCTION_SNAPSHOTS_DIR / "g12_suggestions.snapshot.json"
 
@@ -136,6 +136,9 @@ G12_SNAPSHOT_FILE = JUNCTION_SNAPSHOTS_DIR / "g12_suggestions.snapshot.json"
 def ensure_dirs() -> None:
     """
     Create required folders if missing. Safe to call multiple times.
+
+    Important:
+    - We only create directories; no files are created here.
     """
     for d in [
         JUNCTION_RUNS_DIR,
@@ -191,7 +194,9 @@ __all__ = [
     "JUNCTION_RUNS_DIR",
     "JUNCTION_SNAPSHOTS_DIR",
     "PROMPTS_DIR",
-    "PROMPT_STORE_DIR",
+    "PROMPT_DIR",  # alias
+    "PROMPTS_STORE_DIR",
+    "PROMPT_STORE_DIR",  # alias
     "PROMPT_REGISTRY_FILE",
     "G12_SNAPSHOT_FILE",
     "ensure_dirs",

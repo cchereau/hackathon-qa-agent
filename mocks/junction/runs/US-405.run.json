@@ -1,0 +1,98 @@
+{
+  "jira_key": "US-405",
+  "generated_at": "2025-12-17T16:30:37+01:00",
+  "provenance": {
+    "prompt_id": "g1/prompt",
+    "prompt_hash": "sha256:8915168a8699846fd954ed413838a7ede0955c0dcaa4997322c5f360e8473abe",
+    "schema_id": "g2/schema",
+    "schema_hash": "sha256:27fd70c748132e2788648d883fd2346f0732931812317810a7aa40ffb2eea2c9",
+    "provider": "mock",
+    "model": ""
+  },
+  "markdown": "# Test Plan for US-405: Generate and Sign Leasing Contract with Document Pack\n\n## Introduction\nThis test plan outlines the strategy for testing the new feature of generating and signing leasing contracts digitally as per JIRA issue US-405.\n\n## Test Objectives\n- Ensure that the contract PDF pack is generated accurately from the quotation.\n- Validate that the digital signature workflow completes successfully.\n- Confirm that the signed contract is archived correctly.\n\n## Test Scope\n- **In-Scope**: Generation of contract PDF, digital signature workflow, archiving of the signed contract.\n- **Out-of-Scope**: Other features not related to contract generation and signing.\n\n## Resources\n- QA Team Members\n- Development Team\n- Testing Environments (Staging, Production)\n\n## Test Environment\n- Staging Environment\n  - Backend: [backend/services/contract_service.py](#)\n  - Backend: [backend/services/signature_service.py](#)\n\n## Test Deliverables\n- Test results documentation\n- Bug reports (if any)\n- Final test summary report\n\n## Testing Strategy\n1. **Manual Testing**: Perform manual test cases for contract generation and signing workflows.\n2. **Automated Testing**: Leverage existing automated tests where applicable.\n   \n## Test Schedule\n| Task                        | Assigned To | Start Date | End Date   |\n|-----------------------------|-------------|------------|------------|\n| Review requirements         | QA Team     | TBD        | TBD        |\n| Execute existing test cases | QA Team     | TBD        | TBD        |\n| Develop new test cases      | QA Team     | TBD        | TBD        |\n| Regression testing          | QA Team     | TBD        | TBD        |\n\n## Risk Management\n- Potential risks include issues during contract generation and digital signing. Adequate mitigation strategies will be put in place, including thorough testing and rollback mechanisms.\n\n## Acceptance Criteria\n- **AC1**: Contract PDF pack is generated from the quotation.\n- **AC2**: Digital signature workflow must complete successfully.\n- **AC3**: Signed contract is archived.\n\n## Exit Criteria\n- All test scenarios must pass or have documented exceptions.\n- Regression tests must be conducted to ensure no other features are broken.",
+  "suggestions": [
+    {
+      "title": "Validate contract PDF generation with various quotation inputs",
+      "priority": "HIGH",
+      "type": "functional",
+      "given": "A valid quotation input",
+      "when": "The user requests the contract PDF pack",
+      "then": "The system generates the correct contract PDF pack",
+      "mapped_existing_test_key": "TEST-US-405-1"
+    },
+    {
+      "title": "Ensure digital signature process is accessible and user-friendly",
+      "priority": "MEDIUM",
+      "type": "functional",
+      "given": "The user has a valid contract to sign",
+      "when": "The user initiates the digital signature workflow",
+      "then": "The user is guided through an intuitive signature process",
+      "mapped_existing_test_key": "TEST-US-405-2"
+    },
+    {
+      "title": "Verify successful archiving of signed contracts",
+      "priority": "HIGH",
+      "type": "functional",
+      "given": "A contract has been successfully signed",
+      "when": "The archiving process is initiated",
+      "then": "The signed contract is stored in the archive system",
+      "mapped_existing_test_key": null
+    },
+    {
+      "title": "Test digital signature expiration behavior",
+      "priority": "LOW",
+      "type": "security",
+      "given": "A signed contract with an expired digital signature",
+      "when": "A request is made to retrieve the signed contract",
+      "then": "The system should not allow the signed contract to be validated",
+      "mapped_existing_test_key": null
+    },
+    {
+      "title": "Performance test for contract PDF generation under load",
+      "priority": "MEDIUM",
+      "type": "performance",
+      "given": "Multiple users requesting contract generation",
+      "when": "Users initiate contract PDF generation simultaneously",
+      "then": "The system should generate all requests without failures within acceptable time limits",
+      "mapped_existing_test_key": null
+    }
+  ],
+  "raw_context": {
+    "issue": {
+      "key": "US-405",
+      "summary": "Generate and sign leasing contract with document pack",
+      "description": "As a customer, I want to sign my leasing contract digitally, so that the agreement is legally binding.",
+      "acceptance_criteria": "AC1: Contract PDF pack is generated from the quotation.\nAC2: Digital signature workflow must complete successfully.\nAC3: Signed contract is archived."
+    },
+    "tests": [
+      {
+        "key": "TEST-US-405-1",
+        "summary": "Generate contract PDF pack",
+        "steps": "Given a quotation\nWhen generating contract\nThen PDF pack is created",
+        "tags": [
+          "functional"
+        ]
+      },
+      {
+        "key": "TEST-US-405-2",
+        "summary": "Complete digital signature workflow",
+        "steps": "Given a contract\nWhen signed digitally\nThen contract is marked as signed",
+        "tags": [
+          "functional"
+        ]
+      }
+    ],
+    "changes": [
+      {
+        "file_path": "backend/services/contract_service.py",
+        "summary": "Generate contract PDF pack",
+        "diff_excerpt": "Assemble documents from quotation"
+      },
+      {
+        "file_path": "backend/services/signature_service.py",
+        "summary": "Integrate digital signature workflow",
+        "diff_excerpt": "Trigger external signature provider"
+      }
+    ]
+  }
+}

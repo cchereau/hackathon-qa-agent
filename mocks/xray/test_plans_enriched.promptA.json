@@ -1,0 +1,81 @@
+[
+  {
+    "key": "TP-001",
+    "governance": {
+      "status": "AUTO",
+      "source": "g4_apply_run",
+      "signals": [
+        "applied_run:US-401",
+        "ai_candidates:5",
+        "prompt:sha256:9",
+        "decisions:accepted=5,rejected=0,pending=0"
+      ],
+      "run_jira_key": "US-401",
+      "prompt_hash": "sha256:9663e903824c01c384704389ecf6026a241431dfa36e4f67ace112a94835aa78"
+    },
+    "overlay": {
+      "ai_candidates": [
+        {
+          "candidate_key": "CAND-US-401-001",
+          "title": "Verify correct monthly rent calculation for various vehicle prices",
+          "priority": "HIGH",
+          "type": "functional",
+          "mapped_existing_test_key": "TEST-US-401-1",
+          "decision": "ACCEPTED",
+          "rationale": "",
+          "source_run": "US-401",
+          "prompt_hash": "sha256:9663e903824c01c384704389ecf6026a241431dfa36e4f67ace112a94835aa78",
+          "generated_at": null
+        },
+        {
+          "candidate_key": "CAND-US-401-002",
+          "title": "Ensure total cost of leasing is calculated correctly",
+          "priority": "HIGH",
+          "type": "functional",
+          "mapped_existing_test_key": null,
+          "decision": "ACCEPTED",
+          "rationale": "",
+          "source_run": "US-401",
+          "prompt_hash": "sha256:9663e903824c01c384704389ecf6026a241431dfa36e4f67ace112a94835aa78",
+          "generated_at": null
+        },
+        {
+          "candidate_key": "CAND-US-401-003",
+          "title": "Reject quotation submission with negative mileage",
+          "priority": "HIGH",
+          "type": "functional",
+          "mapped_existing_test_key": "TEST-US-401-2",
+          "decision": "ACCEPTED",
+          "rationale": "",
+          "source_run": "US-401",
+          "prompt_hash": "sha256:9663e903824c01c384704389ecf6026a241431dfa36e4f67ace112a94835aa78",
+          "generated_at": null
+        },
+        {
+          "candidate_key": "CAND-US-401-004",
+          "title": "Ensure residual value is calculated based on input parameters",
+          "priority": "MEDIUM",
+          "type": "functional",
+          "mapped_existing_test_key": "TEST-US-401-3",
+          "decision": "ACCEPTED",
+          "rationale": "",
+          "source_run": "US-401",
+          "prompt_hash": "sha256:9663e903824c01c384704389ecf6026a241431dfa36e4f67ace112a94835aa78",
+          "generated_at": null
+        },
+        {
+          "candidate_key": "CAND-US-401-005",
+          "title": "Display business message for invalid down payment",
+          "priority": "MEDIUM",
+          "type": "functional",
+          "mapped_existing_test_key": null,
+          "decision": "ACCEPTED",
+          "rationale": "",
+          "source_run": "US-401",
+          "prompt_hash": "sha256:9663e903824c01c384704389ecf6026a241431dfa36e4f67ace112a94835aa78",
+          "generated_at": null
+        }
+      ]
+    }
+  }
+]

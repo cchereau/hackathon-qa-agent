@@ -23,7 +23,11 @@ logger = logging.getLogger("qa-test-plan-agent")
 
 router = APIRouter(prefix="/api/test-plans", tags=["test-plans"])
 
+# Run overlays are US-xxx and must exist on disk as mocks/junction/runs/US-xxx.run.json
 _RUN_KEY_RE = re.compile(r"^US-\d{3,}$")
+
+# File overlay names are constrained to avoid path tricks and to keep UI predictable.
+_FILE_OVERLAY_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
 # Candidate decision values persisted in file overlays (T0+)
 DEC_PENDING = "PENDING"
@@ -31,14 +35,18 @@ DEC_ACCEPT = "ACCEPTED"
 DEC_REJECT = "REJECTED"
 _ALLOWED_DECISIONS = {DEC_PENDING, DEC_ACCEPT, DEC_REJECT}
 
+# Default FILE overlays exposed to UI even if not yet created on disk
+_DEFAULT_FILE_OVERLAYS: List[Dict[str, str]] = [
+    {"name": "promptA", "kind": "file", "label": "promptA (file)"},
+    {"name": "promptB", "kind": "file", "label": "promptB (file)"},
+    {"name": "coreA", "kind": "file", "label": "coreA (file)"},
+    {"name": "governanceStrict", "kind": "file", "label": "governanceStrict (file)"},
+]
+
 
 # ─────────────────────────────────────────────────────────────
-# Helpers
+# Helpers (typed and defensive)
 # ─────────────────────────────────────────────────────────────
-def _safe_list(value: Any) -> List[Any]:
-    return value if isinstance(value, list) else []
-
-
 def _as_dict(x: Any) -> Dict[str, Any]:
     return x if isinstance(x, dict) else {}
 
@@ -51,8 +59,35 @@ def _as_list(x: Any) -> List[Any]:
     return x if isinstance(x, list) else []
 
 
+def _as_list_str(x: Any) -> List[str]:
+    return [i for i in _as_list(x) if isinstance(i, str)]
+
+
 def _as_list_dict(x: Any) -> List[Dict[str, Any]]:
     return [i for i in _as_list(x) if isinstance(i, dict)]
+
+
+def _dedup_keep_order(items: List[str]) -> List[str]:
+    seen = set()
+    out: List[str] = []
+    for it in items:
+        if it in seen:
+            continue
+        seen.add(it)
+        out.append(it)
+    return out
+
+
+def _normalize_overlay_param(overlay: Optional[str]) -> Optional[str]:
+    """
+    Normalize overlay query param:
+      - None or "" or whitespace => None
+      - else stripped string
+    """
+    if overlay is None:
+        return None
+    ov = overlay.strip()
+    return ov if ov else None
 
 
 def _overlay_status(plan: Dict[str, Any]) -> str:
@@ -61,13 +96,56 @@ def _overlay_status(plan: Dict[str, Any]) -> str:
     return status if isinstance(status, str) and status else "NOT_ANALYZED"
 
 
+def _is_valid_file_overlay_name(name: Optional[str]) -> bool:
+    if not name:
+        return False
+    n = name.strip()
+    return bool(_FILE_OVERLAY_RE.match(n))
+
+
 def _is_run_overlay_name(name: Optional[str]) -> bool:
+    """
+    A "run overlay" is identified by a US-xxx key and must exist on disk as:
+      mocks/junction/runs/US-xxx.run.json
+    """
     if not name:
         return False
     n = name.strip()
     if not _RUN_KEY_RE.match(n):
         return False
     return (JUNCTION_RUNS_DIR / f"{n}.run.json").exists()
+
+
+def _safe_load_test_plans_overlay(name: str) -> List[dict]:
+    """
+    UI expects file overlays to be selectable even if not yet created.
+    So: if overlay file is missing or cannot be loaded, return empty list.
+    """
+    if not _is_valid_file_overlay_name(name):
+        raise HTTPException(status_code=400, detail={"message": "Invalid file overlay name", "overlay": name})
+
+    try:
+        overlay_list = load_test_plans_overlay(name)
+        return overlay_list if isinstance(overlay_list, list) else []
+    except FileNotFoundError:
+        return []
+    except Exception as e:
+        logger.warning("Failed to load file overlay %s: %s", name, e)
+        return []
+
+
+def _safe_save_test_plans_overlay(name: str, overlay_list: List[dict]) -> None:
+    if not _is_valid_file_overlay_name(name):
+        raise HTTPException(status_code=400, detail={"message": "Invalid file overlay name", "overlay": name})
+    save_test_plans_overlay(name, overlay_list)
+
+
+def _load_run_doc(run_key: str) -> Optional[Dict[str, Any]]:
+    p = JUNCTION_RUNS_DIR / f"{run_key}.run.json"
+    if not p.exists():
+        return None
+    raw = load_json_file(p)
+    return raw if isinstance(raw, dict) else None
 
 
 def _list_run_overlays() -> List[Dict[str, Any]]:
@@ -89,7 +167,7 @@ def _list_run_overlays() -> List[Dict[str, Any]]:
             prompt_hash = prov.get("prompt_hash")
 
             label = f"{name} (run)"
-            if prompt_hash:
+            if isinstance(prompt_hash, str) and prompt_hash:
                 label = f"{name} (run, {str(prompt_hash)[:8]}…)"
             out.append({"name": name, "kind": "run", "label": label})
         except Exception:
@@ -101,50 +179,68 @@ def _list_run_overlays() -> List[Dict[str, Any]]:
 def _list_file_overlays() -> List[Dict[str, Any]]:
     """
     Returns overlays present under mocks/xray/test_plans_enriched.<name>.json
+    PLUS default overlays even if not present yet (so UI is not hard-coded).
     """
     out: List[Dict[str, Any]] = []
+    out.extend(_DEFAULT_FILE_OVERLAYS)
 
     sample = xray_plans_overlay_file("promptA")
-    folder = sample.parent if sample else Path(".")
-    if not folder.exists():
-        return out
+    folder = sample.parent if isinstance(sample, Path) else Path(".")
+    if folder.exists():
+        for p in sorted(folder.glob("test_plans_enriched.*.json")):
+            parts = p.name.split(".")
+            if len(parts) < 3:
+                continue
+            name = parts[-2].strip()
+            if not name or not _is_valid_file_overlay_name(name):
+                continue
+            out.append({"name": name, "kind": "file", "label": f"{name} (file)"})
 
-    for p in sorted(folder.glob("test_plans_enriched.*.json")):
-        parts = p.name.split(".")
-        if len(parts) < 3:
+    # Deduplicate by name (discovered file can override default label if same name)
+    by_name: Dict[str, Dict[str, Any]] = {}
+    for o in out:
+        n = o.get("name")
+        if not n:
             continue
-        name = parts[-2].strip()
-        if not name:
-            continue
-        out.append({"name": name, "kind": "file", "label": f"{name} (file)"})
+        by_name[str(n)] = o
 
-    return out
+    data = list(by_name.values())
+    data.sort(key=lambda x: (str(x.get("name") or "").lower()))
+    return data
 
 
-def _load_run_doc(run_key: str) -> Optional[Dict[str, Any]]:
-    p = JUNCTION_RUNS_DIR / f"{run_key}.run.json"
-    if not p.exists():
-        return None
-    raw = load_json_file(p)
-    return raw if isinstance(raw, dict) else None
+def _merge_overlay_into_plan(base: Dict[str, Any], overlay_plan: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Merge only the overlay-specific fields into the baseline plan.
+    We keep this explicit to avoid accidental baseline drift.
+    """
+    merged = dict(base)
+    for k in ("governance", "overlay"):
+        if k in overlay_plan:
+            merged[k] = overlay_plan.get(k)
+    # If overlay plan contains enriched plan fields, allow them explicitly.
+    for k in ("summary", "jira_keys", "tests"):
+        if k in overlay_plan:
+            merged[k] = overlay_plan.get(k)
+    return merged
 
 
 def _compute_run_overlay_for_plan(base_plan: Dict[str, Any], run_doc: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Pattern A:
-      - A run (US-xxx.run.json) is treated as a computed overlay (read-only).
+    Pattern A (computed, read-only):
+      - A run (US-xxx.run.json) is treated as a computed overlay.
       - We compute an overlay ONLY for plans that contain that US key in jira_keys.
       - Output is merged in-memory (no baseline writes).
     """
     plan_key = base_plan.get("key")
 
-    jira_keys = [x for x in _safe_list(base_plan.get("jira_keys")) if isinstance(x, str)]
+    jira_keys = [x for x in _as_list_str(base_plan.get("jira_keys")) if x]
     run_key = _as_str(run_doc.get("jira_key"))
 
     if not run_key or run_key not in jira_keys:
         return {
             "key": plan_key,
-            "governance": {"status": "NOT_ANALYZED", "signals": ["no_run_match"]},
+            "governance": {"status": "NOT_ANALYZED", "signals": ["no_run_match"], "source": "run"},
             "overlay": {"candidate_tests": []},
         }
 
@@ -184,7 +280,7 @@ def _compute_run_overlay_for_plan(base_plan: Dict[str, Any], run_doc: Dict[str, 
 
     status = "REVIEW" if candidates else "AUTO"
     signals: List[str] = [f"run:{run_key}", f"candidates:{len(candidates)}"]
-    if prompt_hash:
+    if isinstance(prompt_hash, str) and prompt_hash:
         signals.append(f"prompt:{str(prompt_hash)[:8]}")
 
     return {
@@ -204,33 +300,25 @@ def _compute_run_overlay_for_plan(base_plan: Dict[str, Any], run_doc: Dict[str, 
     }
 
 
-def _merge_overlay_into_plan(base: Dict[str, Any], overlay_plan: Dict[str, Any]) -> Dict[str, Any]:
-    merged = dict(base)
-    for k in ("governance", "overlay"):
-        if k in overlay_plan:
-            merged[k] = overlay_plan.get(k)
-    for k in ("summary", "jira_keys", "tests"):
-        if k in overlay_plan:
-            merged[k] = overlay_plan.get(k)
-    return merged
-
-
 def _compute_file_overlay_for_plan(base_plan: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Existing (T0 MVP) rules-based overlay generator used by G4 when they click "Enrich".
-    This writes to file overlays (promptA/promptB/etc).
+    Rules-based overlay generator used by G4 when they click "Enrich".
+    This writes to file overlays (promptA/promptB/coreA/etc).
+
+    IMPORTANT:
+      - Tests are named TEST-US-401-1 (not TEST-401-1)
+      - Match baseline tests using prefix TEST-<JIRA_KEY>-  e.g. TEST-US-401-
     """
     plan_key = base_plan.get("key")
-    jira_keys: List[str] = [x for x in _safe_list(base_plan.get("jira_keys")) if isinstance(x, str)]
-    baseline_tests = set(x for x in _safe_list(base_plan.get("tests")) if isinstance(x, str))
+    jira_keys: List[str] = [x for x in _as_list_str(base_plan.get("jira_keys")) if x]
+    baseline_tests = set([x for x in _as_list_str(base_plan.get("tests")) if x])
 
     existing_to_execute: List[str] = []
     existing_to_skip: List[dict] = []
     new_to_create: List[dict] = []
 
     for jk in jira_keys:
-        issue_num = jk.split("-")[-1]
-        expected_prefix = f"TEST-{issue_num}-"
+        expected_prefix = f"TEST-{jk}-"  # TEST-US-401-
         baseline_for_issue = [t for t in baseline_tests if t.startswith(expected_prefix)]
 
         for tkey in baseline_for_issue:
@@ -243,25 +331,13 @@ def _compute_file_overlay_for_plan(base_plan: Dict[str, Any]) -> Dict[str, Any]:
                     "title": f"{jk} – Missing coverage: create regression test",
                     "tags": ["regression"],
                     "priority": "HIGH",
-                    "given": "A user is authenticated and has access to the QA Test Management Portal",
-                    "when": "The user executes the feature described in the Jira story",
-                    "then": "The expected outcome matches acceptance criteria and errors are handled cleanly",
+                    "given": "A dealer or back-office user is authenticated in the Leasing Portal",
+                    "when": "The user executes the business flow described in the Jira story",
+                    "then": "The outcome matches acceptance criteria and edge cases are handled cleanly",
                 }
             )
 
-    def _dedup(seq: List[Any]) -> List[Any]:
-        seen = set()
-        out = []
-        for x in seq:
-            k = x if isinstance(x, str) else (x.get("test_key") if isinstance(x, dict) else str(x))
-            if k in seen:
-                continue
-            seen.add(k)
-            out.append(x)
-        return out
-
-    existing_to_execute = cast(List[str], _dedup(existing_to_execute))
-    existing_to_skip = cast(List[dict], _dedup(existing_to_skip))
+    existing_to_execute = _dedup_keep_order(existing_to_execute)
 
     status = "REVIEW" if (existing_to_skip or new_to_create) else "AUTO"
     signals: List[str] = []
@@ -347,7 +423,7 @@ def _run_candidates_to_governable_candidates(run_overlay: Dict[str, Any]) -> Tup
 def api_list_overlays():
     """
     Returns overlays usable from the UI:
-      - file overlays: test_plans_enriched.<name>.json
+      - file overlays: test_plans_enriched.<name>.json (AND defaults promptA/promptB/coreA/...)
       - run overlays:  US-xxx.run.json (Pattern A, computed/read-only)
     """
     file_overlays = _list_file_overlays()
@@ -366,7 +442,6 @@ def api_list_overlays():
         return (kind_rank, (o.get("name") or "").lower())
 
     data.sort(key=_sort_key)
-
     return {"data": data, "meta": {"count": len(data)}, "errors": []}
 
 
@@ -380,20 +455,21 @@ def api_list_test_plans(overlay: Optional[str] = Query(default=None)):
       - if overlay is a run overlay (US-xxx): compute overlay per plan on the fly (Pattern A)
     """
     base = list_test_plans()
+    overlay_name = _normalize_overlay_param(overlay)
 
-    if not overlay:
+    if not overlay_name:
         return {
             "data": [{**p, "overlay_status": "NOT_ANALYZED"} for p in base],
-            "meta": {"count": len(base), "overlay": None},
+            "meta": {"count": len(base), "overlay": None, "overlay_kind": None},
             "errors": [],
         }
 
-    if _is_run_overlay_name(overlay):
-        run_doc = _load_run_doc(overlay)
+    if _is_run_overlay_name(overlay_name):
+        run_doc = _load_run_doc(overlay_name)
         if not run_doc:
             return {
                 "data": [{**p, "overlay_status": "NOT_ANALYZED"} for p in base],
-                "meta": {"count": len(base), "overlay": overlay, "overlay_kind": "run"},
+                "meta": {"count": len(base), "overlay": overlay_name, "overlay_kind": "run"},
                 "errors": [],
             }
 
@@ -404,9 +480,10 @@ def api_list_test_plans(overlay: Optional[str] = Query(default=None)):
             merged["overlay_status"] = _overlay_status(merged)
             out.append(merged)
 
-        return {"data": out, "meta": {"count": len(out), "overlay": overlay, "overlay_kind": "run"}, "errors": []}
+        return {"data": out, "meta": {"count": len(out), "overlay": overlay_name, "overlay_kind": "run"}, "errors": []}
 
-    overlay_list = load_test_plans_overlay(overlay)
+    # file overlay
+    overlay_list = _safe_load_test_plans_overlay(overlay_name)
     overlay_by_key = {p.get("key"): p for p in overlay_list if isinstance(p, dict) and isinstance(p.get("key"), str)}
 
     out: List[Dict[str, Any]] = []
@@ -418,7 +495,7 @@ def api_list_test_plans(overlay: Optional[str] = Query(default=None)):
         merged["overlay_status"] = _overlay_status(merged)
         out.append(merged)
 
-    return {"data": out, "meta": {"count": len(out), "overlay": overlay, "overlay_kind": "file"}, "errors": []}
+    return {"data": out, "meta": {"count": len(out), "overlay": overlay_name, "overlay_kind": "file"}, "errors": []}
 
 
 @router.get("/{plan_key}")
@@ -433,47 +510,57 @@ def api_get_test_plan(plan_key: str, overlay: Optional[str] = Query(default=None
     if base is None:
         raise HTTPException(status_code=404, detail={"message": f"Unknown plan_key: {plan_key}"})
 
-    if not overlay:
-        return {"data": {**base, "overlay_status": "NOT_ANALYZED"}, "meta": {"plan_key": plan_key, "overlay": None}, "errors": []}
+    overlay_name = _normalize_overlay_param(overlay)
 
-    if _is_run_overlay_name(overlay):
-        run_doc = _load_run_doc(overlay)
+    if not overlay_name:
+        merged = {**base, "overlay_status": "NOT_ANALYZED"}
+        return {"data": merged, "meta": {"plan_key": plan_key, "overlay": None, "overlay_kind": None}, "errors": []}
+
+    if _is_run_overlay_name(overlay_name):
+        run_doc = _load_run_doc(overlay_name)
         if not run_doc:
-            return {"data": {**base, "overlay_status": "NOT_ANALYZED"}, "meta": {"plan_key": plan_key, "overlay": overlay, "overlay_kind": "run"}, "errors": []}
+            merged = {**base, "overlay_status": "NOT_ANALYZED"}
+            return {"data": merged, "meta": {"plan_key": plan_key, "overlay": overlay_name, "overlay_kind": "run"}, "errors": []}
 
         ov = _compute_run_overlay_for_plan(base, run_doc)
         merged = _merge_overlay_into_plan(base, ov)
         merged["overlay_status"] = _overlay_status(merged)
-        return {"data": merged, "meta": {"plan_key": plan_key, "overlay": overlay, "overlay_kind": "run"}, "errors": []}
+        return {"data": merged, "meta": {"plan_key": plan_key, "overlay": overlay_name, "overlay_kind": "run"}, "errors": []}
 
-    merged = get_test_plan_with_overlay(plan_key, overlay_name=overlay)
+    # file overlay (prefer the canonical merge function)
+    if not _is_valid_file_overlay_name(overlay_name):
+        raise HTTPException(status_code=400, detail={"message": "Invalid file overlay name", "overlay": overlay_name})
+
+    merged = get_test_plan_with_overlay(plan_key, overlay_name=overlay_name)
     merged_final: Dict[str, Any] = merged if isinstance(merged, dict) else base
-    return {
-        "data": {**merged_final, "overlay_status": _overlay_status(merged_final)},
-        "meta": {"plan_key": plan_key, "overlay": overlay, "overlay_kind": "file"},
-        "errors": [],
-    }
+    merged_final = {**merged_final, "overlay_status": _overlay_status(merged_final)}
+    return {"data": merged_final, "meta": {"plan_key": plan_key, "overlay": overlay_name, "overlay_kind": "file"}, "errors": []}
 
 
 @router.post("/{plan_key}/enrich")
 def api_enrich_test_plan(
     plan_key: str,
-    overlay: str = Query(default="promptA", description="File overlay name (e.g. promptA, promptB)"),
+    overlay: str = Query(default="promptA", description="File overlay name (e.g. promptA, promptB, coreA)"),
 ):
-    """Compute and persist a file-based overlay for a plan.
+    """
+    Compute and persist a file-based overlay for a plan.
 
     Guardrail (Pattern A):
     - run overlays (US-xxx) are computed and read-only.
     - this endpoint only writes to a file overlay.
     """
-    if _is_run_overlay_name(overlay):
+    overlay_name = _normalize_overlay_param(overlay) or ""
+    if _is_run_overlay_name(overlay_name):
         raise HTTPException(
             status_code=400,
             detail={
                 "message": "Overlay is a run (computed, read-only). Select a file overlay to persist G4 governance.",
-                "overlay": overlay,
+                "overlay": overlay_name,
             },
         )
+
+    if not _is_valid_file_overlay_name(overlay_name):
+        raise HTTPException(status_code=400, detail={"message": "Invalid file overlay name", "overlay": overlay_name})
 
     base = get_test_plan(plan_key)
     if base is None:
@@ -481,13 +568,12 @@ def api_enrich_test_plan(
 
     overlay_plan = _compute_file_overlay_for_plan(base)
 
-    overlay_list = load_test_plans_overlay(overlay)
+    overlay_list = _safe_load_test_plans_overlay(overlay_name)
     overlay_list = _upsert_overlay_plan(overlay_list, plan_key, overlay_plan)
+    _safe_save_test_plans_overlay(overlay_name, overlay_list)
 
-    save_test_plans_overlay(overlay, overlay_list)
-
-    merged = get_test_plan_with_overlay(plan_key, overlay_name=overlay)
-    return {"data": merged, "meta": {"plan_key": plan_key, "overlay": overlay, "overlay_kind": "file"}, "errors": []}
+    merged = get_test_plan_with_overlay(plan_key, overlay_name=overlay_name)
+    return {"data": merged, "meta": {"plan_key": plan_key, "overlay": overlay_name, "overlay_kind": "file"}, "errors": []}
 
 
 # ─────────────────────────────────────────────────────────────
@@ -505,30 +591,32 @@ def api_apply_run_to_file_overlay(
     - Persist candidates into FILE overlay as overlay.ai_candidates[] with decision=PENDING
     - Does NOT touch baseline
     """
-    if not _RUN_KEY_RE.match(run or ""):
-        raise HTTPException(status_code=400, detail={"message": "Invalid run key", "run": run})
+    run_key = _normalize_overlay_param(run) or ""
+    overlay_name = _normalize_overlay_param(overlay) or ""
 
-    if _is_run_overlay_name(overlay):
-        raise HTTPException(status_code=400, detail={"message": "Target overlay must be a FILE overlay name", "overlay": overlay})
+    if not _RUN_KEY_RE.match(run_key):
+        raise HTTPException(status_code=400, detail={"message": "Invalid run key", "run": run_key})
+
+    if _is_run_overlay_name(overlay_name):
+        raise HTTPException(status_code=400, detail={"message": "Target overlay must be a FILE overlay name", "overlay": overlay_name})
+
+    if not _is_valid_file_overlay_name(overlay_name):
+        raise HTTPException(status_code=400, detail={"message": "Invalid file overlay name", "overlay": overlay_name})
 
     base = get_test_plan(plan_key)
     if base is None:
         raise HTTPException(status_code=404, detail={"message": f"Unknown plan_key: {plan_key}"})
 
-    run_doc = _load_run_doc(run)
+    run_doc = _load_run_doc(run_key)
     if not run_doc:
-        raise HTTPException(status_code=404, detail={"message": f"Run not found: {run}", "run": run})
+        raise HTTPException(status_code=404, detail={"message": f"Run not found: {run_key}", "run": run_key})
 
-    # Compute run overlay for this plan
     run_overlay = _compute_run_overlay_for_plan(base, run_doc)
-
-    # Persist even if empty
     candidates, meta = _run_candidates_to_governable_candidates(run_overlay)
-    run_key = meta.get("source_run")
+    source_run = meta.get("source_run")
     prompt_hash = meta.get("prompt_hash")
 
-    # Load existing file overlay plan (if any)
-    overlay_list = load_test_plans_overlay(overlay)
+    overlay_list = _safe_load_test_plans_overlay(overlay_name)
     existing_plan_opt = _find_overlay_plan(overlay_list, plan_key)
 
     existing_plan: Dict[str, Any] = (
@@ -540,40 +628,38 @@ def api_apply_run_to_file_overlay(
     gov: Dict[str, Any] = _as_dict(existing_plan.get("governance"))
     ov: Dict[str, Any] = _as_dict(existing_plan.get("overlay"))
 
-    # Merge strategy:
-    # - keep existing ai_candidates from other runs
-    # - replace candidates for this run (prefix + source_run)
     existing_ai = _as_list_dict(ov.get("ai_candidates"))
 
     kept: List[dict] = []
-    prefix = f"CAND-{run}-"
+    prefix = f"CAND-{run_key}-"
     for c in existing_ai:
         ck = c.get("candidate_key")
         src_run = c.get("source_run")
-
         if isinstance(ck, str) and ck.startswith(prefix):
             continue
-        if isinstance(src_run, str) and src_run == run:
+        if isinstance(src_run, str) and src_run == run_key:
             continue
         kept.append(c)
 
     new_ai = kept + candidates
     ov["ai_candidates"] = new_ai
 
-    # Governance: mark REVIEW if there are candidates
     signals_any = _as_list(gov.get("signals"))
     signals: List[str] = [s for s in signals_any if isinstance(s, str)]
-    signals.append(f"applied_run:{run}")
+    signals.append(f"applied_run:{run_key}")
     signals.append(f"ai_candidates:{len(new_ai)}")
-    if prompt_hash:
+    if isinstance(prompt_hash, str) and prompt_hash:
         signals.append(f"prompt:{str(prompt_hash)[:8]}")
+    signals = _dedup_keep_order(signals)
 
+    # status: REVIEW if any pending candidates remain
+    has_pending = any((_as_str(c.get("decision")).upper() == DEC_PENDING) for c in new_ai)
     gov.update(
         {
-            "status": "REVIEW" if new_ai else "AUTO",
+            "status": "REVIEW" if has_pending else "AUTO",
             "source": "g4_apply_run",
             "signals": signals,
-            "run_jira_key": run_key,
+            "run_jira_key": source_run,
             "prompt_hash": prompt_hash,
         }
     )
@@ -581,12 +667,12 @@ def api_apply_run_to_file_overlay(
     persisted_overlay_plan: Dict[str, Any] = {"key": plan_key, "governance": gov, "overlay": ov}
 
     overlay_list = _upsert_overlay_plan(overlay_list, plan_key, persisted_overlay_plan)
-    save_test_plans_overlay(overlay, overlay_list)
+    _safe_save_test_plans_overlay(overlay_name, overlay_list)
 
-    merged = get_test_plan_with_overlay(plan_key, overlay_name=overlay)
+    merged = get_test_plan_with_overlay(plan_key, overlay_name=overlay_name)
     return {
         "data": merged,
-        "meta": {"plan_key": plan_key, "overlay": overlay, "overlay_kind": "file", "applied_run": run},
+        "meta": {"plan_key": plan_key, "overlay": overlay_name, "overlay_kind": "file", "applied_run": run_key},
         "errors": [],
     }
 
@@ -606,11 +692,16 @@ def api_set_candidate_decision(
     body: CandidateDecisionIn,
     overlay: str = Query(default="promptA", description="FILE overlay name where decisions are persisted"),
 ):
-    if _is_run_overlay_name(overlay):
+    overlay_name = _normalize_overlay_param(overlay) or ""
+
+    if _is_run_overlay_name(overlay_name):
         raise HTTPException(
             status_code=400,
-            detail={"message": "Decisions can only be persisted in FILE overlays.", "overlay": overlay},
+            detail={"message": "Decisions can only be persisted in FILE overlays.", "overlay": overlay_name},
         )
+
+    if not _is_valid_file_overlay_name(overlay_name):
+        raise HTTPException(status_code=400, detail={"message": "Invalid file overlay name", "overlay": overlay_name})
 
     ck = _as_str(body.candidate_key)
     if not ck:
@@ -623,12 +714,12 @@ def api_set_candidate_decision(
             detail={"message": "Invalid decision", "decision": dec, "allowed": sorted(_ALLOWED_DECISIONS)},
         )
 
-    overlay_list = load_test_plans_overlay(overlay)
+    overlay_list = _safe_load_test_plans_overlay(overlay_name)
     plan_overlay_opt = _find_overlay_plan(overlay_list, plan_key)
     if not isinstance(plan_overlay_opt, dict):
         raise HTTPException(
             status_code=404,
-            detail={"message": "Plan overlay not found in file overlay", "plan_key": plan_key, "overlay": overlay},
+            detail={"message": "Plan overlay not found in file overlay", "plan_key": plan_key, "overlay": overlay_name},
         )
 
     plan_overlay: Dict[str, Any] = cast(Dict[str, Any], plan_overlay_opt)
@@ -645,23 +736,26 @@ def api_set_candidate_decision(
             break
 
     if not updated:
-        raise HTTPException(status_code=404, detail={"message": "candidate_key not found in overlay.ai_candidates", "candidate_key": ck})
+        raise HTTPException(
+            status_code=404,
+            detail={"message": "candidate_key not found in overlay.ai_candidates", "candidate_key": ck},
+        )
 
     ov["ai_candidates"] = ai
     plan_overlay["overlay"] = ov
 
-    # Governance signals + status
     gov: Dict[str, Any] = _as_dict(plan_overlay.get("governance"))
 
     signals_any = _as_list(gov.get("signals"))
     signals: List[str] = [s for s in signals_any if isinstance(s, str)]
-    signals = [s for s in signals if not s.startswith("decisions:")]  # keep readable
+    signals = [s for s in signals if not s.startswith("decisions:")]
 
-    cnt_a = sum(1 for c in ai if c.get("decision") == DEC_ACCEPT)
-    cnt_r = sum(1 for c in ai if c.get("decision") == DEC_REJECT)
-    cnt_p = sum(1 for c in ai if c.get("decision") == DEC_PENDING)
+    cnt_a = sum(1 for c in ai if _as_str(c.get("decision")).upper() == DEC_ACCEPT)
+    cnt_r = sum(1 for c in ai if _as_str(c.get("decision")).upper() == DEC_REJECT)
+    cnt_p = sum(1 for c in ai if _as_str(c.get("decision")).upper() == DEC_PENDING)
 
     signals.append(f"decisions:accepted={cnt_a},rejected={cnt_r},pending={cnt_p}")
+    signals = _dedup_keep_order(signals)
 
     gov["signals"] = signals
     gov["status"] = "REVIEW" if cnt_p > 0 else "AUTO"
@@ -670,7 +764,7 @@ def api_set_candidate_decision(
     plan_overlay["governance"] = gov
 
     overlay_list = _upsert_overlay_plan(overlay_list, plan_key, plan_overlay)
-    save_test_plans_overlay(overlay, overlay_list)
+    _safe_save_test_plans_overlay(overlay_name, overlay_list)
 
-    merged = get_test_plan_with_overlay(plan_key, overlay_name=overlay)
-    return {"data": merged, "meta": {"plan_key": plan_key, "overlay": overlay, "overlay_kind": "file"}, "errors": []}
+    merged = get_test_plan_with_overlay(plan_key, overlay_name=overlay_name)
+    return {"data": merged, "meta": {"plan_key": plan_key, "overlay": overlay_name, "overlay_kind": "file"}, "errors": []}

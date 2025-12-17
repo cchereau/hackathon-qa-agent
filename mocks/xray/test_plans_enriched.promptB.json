@@ -1,0 +1,91 @@
+[
+  {
+    "key": "TP-007",
+    "governance": {
+      "status": "AUTO",
+      "signals": [],
+      "source": "g4_enrich"
+    },
+    "overlay": {
+      "existing_tests_to_execute": [
+        "TEST-US-401-1",
+        "TEST-US-402-1",
+        "TEST-US-403-1",
+        "TEST-US-405-1"
+      ],
+      "existing_tests_to_skip": [],
+      "new_tests_to_create": []
+    }
+  },
+  {
+    "key": "TP-002",
+    "governance": {
+      "status": "AUTO",
+      "signals": [],
+      "source": "g4_enrich"
+    },
+    "overlay": {
+      "existing_tests_to_execute": [
+        "TEST-US-402-1",
+        "TEST-US-402-2",
+        "TEST-US-402-3"
+      ],
+      "existing_tests_to_skip": [],
+      "new_tests_to_create": []
+    }
+  },
+  {
+    "key": "TP-005",
+    "governance": {
+      "status": "REVIEW",
+      "source": "g4_apply_run",
+      "signals": [
+        "applied_run:US-406",
+        "ai_candidates:3",
+        "prompt:sha256:6"
+      ],
+      "run_jira_key": "US-406",
+      "prompt_hash": "sha256:6df317e4d541abafa76e39a9f541f243beb7ec44be717bd11f53f730064c57d2"
+    },
+    "overlay": {
+      "ai_candidates": [
+        {
+          "candidate_key": "CAND-US-406-001",
+          "title": "Mileage amendment triggers repricing correctly",
+          "priority": "HIGH",
+          "type": "functional",
+          "mapped_existing_test_key": "TEST-US-406-1",
+          "decision": "PENDING",
+          "rationale": "",
+          "source_run": "US-406",
+          "prompt_hash": "sha256:6df317e4d541abafa76e39a9f541f243beb7ec44be717bd11f53f730064c57d2",
+          "generated_at": null
+        },
+        {
+          "candidate_key": "CAND-US-406-002",
+          "title": "Amendment history is logged correctly",
+          "priority": "MEDIUM",
+          "type": "functional",
+          "mapped_existing_test_key": null,
+          "decision": "PENDING",
+          "rationale": "",
+          "source_run": "US-406",
+          "prompt_hash": "sha256:6df317e4d541abafa76e39a9f541f243beb7ec44be717bd11f53f730064c57d2",
+          "generated_at": null
+        },
+        {
+          "candidate_key": "CAND-US-406-003",
+          "title": "Customer is notified of new pricing",
+          "priority": "MEDIUM",
+          "type": "functional",
+          "mapped_existing_test_key": null,
+          "decision": "PENDING",
+          "rationale": "",
+          "source_run": "US-406",
+          "prompt_hash": "sha256:6df317e4d541abafa76e39a9f541f243beb7ec44be717bd11f53f730064c57d2",
+          "generated_at": null
+        }
+      ]
+    }
+  }
+]

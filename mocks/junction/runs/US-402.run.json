@@ -1,0 +1,113 @@
+{
+  "jira_key": "US-402",
+  "generated_at": "2025-12-17T18:22:17+01:00",
+  "provenance": {
+    "prompt_id": "g1/prompt",
+    "prompt_hash": "sha256:fa49ce91099a489c0611d7414bcd723a89eb1e55378fdf226eb13a8ec0dbf5fc",
+    "schema_id": "g2/schema",
+    "schema_hash": "sha256:27fd70c748132e2788648d883fd2346f0732931812317810a7aa40ffb2eea2c9",
+    "provider": "mock",
+    "model": ""
+  },
+  "markdown": "# Test Plan for JIRA Issue US-402: Apply Dealer Discount with Approval Rules\n\n## Overview\nThis test plan outlines the strategy for testing the implementation of dealer discount features, focusing on the application's behavior in respect to discount approval rules. It will ensure that discounts are applied correctly based on established thresholds and that audit trails are created for all approvals.\n\n## Scope\n### In-Scope\n- Applying discounts below the approval threshold.\n- Applying discounts above the approval threshold that require manager approval.\n- Auditing discount approval decisions.\n\n### Out of Scope\n- Testing unrelated discount features.\n- Non-dealer user roles.\n\n## Test Strategy\n- **Types of Testing**: Functional, Regression, and Security tests will be employed.\n- **Tools**: Automated test cases using Xray, manual testing for exploratory scenarios.\n\n## Resources\n- **Team**: QA Engineers, Developers, Product Owners.\n- **Environment**: Staging environment configured to mimic production settings.\n\n## Environment Setup\n- Deploy the latest version of the backend services including modifications in `discount_service.py`, `discount_routes.py`, and `audit_logger.py`.\n- Ensure a consistent database state to test various discount scenarios.\n\n## Test Cases\n### Existing Test Cases\n- `TEST-US-402-1`: Apply discount below approval threshold.\n- `TEST-US-402-2`: Apply discount above approval threshold.\n- `TEST-US-402-3`: Audit discount approval decision.\n\n### New Test Cases\nNew test cases will be suggested below to further cover the functionality and edge cases for the discount approval process.\n\n## Test Execution\n- Execute existing and new test cases in the defined order.\n- Record results, defects, and any observations for analysis.\n\n## Reporting\n- Daily status updates will be provided via the project management tool.\n- A final test report will summarize findings, defect counts, and overall quality assessment.\n\n## Conclusion\nThe implementation of dealer discount functionality must pass all specified tests to ensure business requirements are met and operational integrity is maintained.",
+  "suggestions": [
+    {
+      "title": "Verify automatic discount approval functionality",
+      "priority": "HIGH",
+      "type": "functional",
+      "given": "A dealer user is logged in and a discount below the threshold is requested",
+      "when": "The discount is applied",
+      "then": "The discount should be automatically approved without requiring manager approval",
+      "mapped_existing_test_key": "TEST-US-402-1"
+    },
+    {
+      "title": "Ensure manager approval is required for high discounts",
+      "priority": "HIGH",
+      "type": "functional",
+      "given": "A dealer user is logged in and a discount above the threshold is requested",
+      "when": "The discount is applied",
+      "then": "The discount approval request should go to the manager for approval",
+      "mapped_existing_test_key": "TEST-US-402-2"
+    },
+    {
+      "title": "Check audit logging for approved discounts",
+      "priority": "MEDIUM",
+      "type": "audit",
+      "given": "A discount above the threshold has been approved",
+      "when": "The manager approves the discount",
+      "then": "The approval action should be recorded in the audit log",
+      "mapped_existing_test_key": "TEST-US-402-3"
+    },
+    {
+      "title": "Validate audit log for denied discounts",
+      "priority": "MEDIUM",
+      "type": "audit",
+      "given": "A discount above the threshold has been denied",
+      "when": "The manager denies the discount",
+      "then": "The denial action should be recorded in the audit log",
+      "mapped_existing_test_key": null
+    },
+    {
+      "title": "Test discount application failure handling",
+      "priority": "LOW",
+      "type": "functional",
+      "given": "A dealer user attempts to apply a discount",
+      "when": "The discount application fails due to backend error",
+      "then": "An error message should be displayed to the user and logged accordingly",
+      "mapped_existing_test_key": null
+    }
+  ],
+  "raw_context": {
+    "issue": {
+      "key": "US-402",
+      "summary": "Apply dealer discount with approval rules",
+      "description": "As a dealer user, I want to apply a discount on a quotation, so that I can adjust pricing within allowed commercial rules.",
+      "acceptance_criteria": "AC1: Discounts below the threshold are automatically accepted.\nAC2: Discounts above the threshold require manager approval.\nAC3: Discount approval decisions must be auditable."
+    },
+    "tests": [
+      {
+        "key": "TEST-US-402-1",
+        "summary": "Apply discount below approval threshold",
+        "steps": "Given a quotation\nWhen discount is applied\nThen it is accepted automatically",
+        "tags": [
+          "functional"
+        ]
+      },
+      {
+        "key": "TEST-US-402-2",
+        "summary": "Apply discount above approval threshold",
+        "steps": "Given a quotation\nWhen discount exceeds threshold\nThen approval is required",
+        "tags": [
+          "functional",
+          "compliance"
+        ]
+      },
+      {
+        "key": "TEST-US-402-3",
+        "summary": "Audit discount approval decision",
+        "steps": "Given a discount approval\nWhen decision is made\nThen audit entry is stored",
+        "tags": [
+          "audit",
+          "compliance"
+        ]
+      }
+    ],
+    "changes": [
+      {
+        "file_path": "backend/services/discount_service.py",
+        "summary": "Implement dealer discount thresholds",
+        "diff_excerpt": "Added approval threshold logic"
+      },
+      {
+        "file_path": "backend/routes/discount_routes.py",
+        "summary": "Expose discount approval endpoint",
+        "diff_excerpt": "POST /discounts/approve"
+      },
+      {
+        "file_path": "backend/audit/audit_logger.py",
+        "summary": "Log discount approval decisions",
+        "diff_excerpt": "Persist approval decision metadata"
+      }
+    ]
+  }
+}

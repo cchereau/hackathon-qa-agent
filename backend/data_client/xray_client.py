@@ -1,4 +1,4 @@
-# backup/xray_client.py
+# backend/data_client/xray_client.py
 """
 Mock Xray client.
 
@@ -11,11 +11,17 @@ IMPORTANT:
 - test_plans.json is a LIST of plans (catalog), NOT a dict by Jira key
 - Overlays are stored as:
     test_plans_enriched.<overlay_name>.json
+
+Hackathon notes:
+- Jira keys are expected to be "US-xxx" (e.g., US-401).
+- Some legacy mock datasets may still contain "PROJ-xxx".
+  This client provides a safe fallback lookup (US <-> PROJ) to keep T0 robust.
 """
 
 from __future__ import annotations
 
-from typing import List, Any, Dict, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from backend.llm_client.models import XrayTest
 from backend.utils import (
@@ -25,6 +31,38 @@ from backend.utils import (
     save_json_file,
     xray_plans_overlay_file,
 )
+
+# ----------------------------------------------------------------------
+# Internal helpers
+# ----------------------------------------------------------------------
+def _normalize_key_candidates(jira_key: str) -> List[str]:
+    """
+    Return candidate keys to lookup in tests_by_requirement.json.
+
+    Primary key is used first. Then we try a US <-> PROJ fallback mapping
+    to support legacy datasets without breaking T0.
+    """
+    jk = (jira_key or "").strip()
+    if not jk:
+        return []
+
+    out = [jk]
+
+    # Legacy support: some mocks used "PROJ-401" while new ones use "US-401"
+    if jk.startswith("US-"):
+        out.append("PROJ-" + jk[3:])
+    elif jk.startswith("PROJ-"):
+        out.append("US-" + jk[5:])
+
+    # Dedup while preserving order
+    seen = set()
+    uniq: List[str] = []
+    for k in out:
+        if k not in seen:
+            seen.add(k)
+            uniq.append(k)
+    return uniq
+
 
 # ----------------------------------------------------------------------
 # Xray tests (by Jira issue)
@@ -38,17 +76,24 @@ def _load_tests_from_file(jira_key: str) -> List[XrayTest]:
 
     Expected format:
       {
-        "PROJ-401": [ {XrayTest}, {XrayTest}, ... ],
-        "PROJ-402": [ ... ]
+        "US-401":   [ {XrayTest}, {XrayTest}, ... ],
+        "US-402":   [ ... ],
+        "PROJ-401": [ ... ]   # optional legacy
       }
 
-    Note:
+    Notes:
     - `load_json_file()` returns Any (dict or list), so we must type-guard.
+    - We support US <-> PROJ fallback lookup to keep T0 resilient.
     """
     raw = load_json_file(XRAY_TESTS_FILE)
     data: Dict[str, Any] = raw if isinstance(raw, dict) else {}
 
-    raw_tests = data.get(jira_key, [])
+    raw_tests: Any = None
+    for key in _normalize_key_candidates(jira_key):
+        if key in data:
+            raw_tests = data.get(key)
+            break
+
     if not isinstance(raw_tests, list):
         raw_tests = []
 
@@ -76,10 +121,10 @@ def list_test_plans() -> List[dict]:
     Expected format:
       [
         {
-          "key": "TP-REG-AUTH",
+          "key": "TP-001",
           "summary": "...",
-          "jira_keys": [...],
-          "tests": [...]
+          "jira_keys": ["US-401", "US-402"],
+          "tests": ["TEST-US-401-1", ...]
         },
         ...
       ]
@@ -119,6 +164,10 @@ def load_test_plans_overlay(overlay_name: str) -> List[dict]:
       - list of plan objects (same keys as baseline, plus overlay/governance)
       - empty list if file does not exist
     """
+    overlay_name = (overlay_name or "").strip()
+    if not overlay_name:
+        return []
+
     path = xray_plans_overlay_file(overlay_name)
     if not path.exists():
         return []
@@ -133,8 +182,21 @@ def load_test_plans_overlay(overlay_name: str) -> List[dict]:
 def save_test_plans_overlay(overlay_name: str, plans: List[dict]) -> None:
     """
     Persist an overlay file next to test_plans.json.
+
+    Safety:
+    - Ensure parent directory exists at write time (no side effects at import time).
     """
+    overlay_name = (overlay_name or "").strip()
+    if not overlay_name:
+        # no-op (avoid writing "test_plans_enriched..json")
+        return
+
     path = xray_plans_overlay_file(overlay_name)
+
+    # Ensure directory exists (only here, on save)
+    parent: Path = path.parent
+    parent.mkdir(parents=True, exist_ok=True)
+
     save_json_file(path, plans)
 
 
@@ -156,6 +218,7 @@ def get_test_plan_with_overlay(
     if base is None:
         return None
 
+    overlay_name = (overlay_name or "").strip()
     if not overlay_name:
         return base
 

@@ -1,0 +1,126 @@
+{
+  "jira_key": "US-401",
+  "generated_at": "2025-12-17T15:38:48+01:00",
+  "provenance": {
+    "prompt_id": "g1/prompt",
+    "prompt_hash": "sha256:9663e903824c01c384704389ecf6026a241431dfa36e4f67ace112a94835aa78",
+    "schema_id": "g2/schema",
+    "schema_hash": "sha256:27fd70c748132e2788648d883fd2346f0732931812317810a7aa40ffb2eea2c9",
+    "provider": "mock",
+    "model": ""
+  },
+  "markdown": "# Test Plan for Vehicle Lease Quotation Creation (US-401)\n\n## Introduction\nThis test plan outlines the testing strategy for the feature that enables dealer users to create a vehicle lease quotation with specific pricing parameters. The feature is aimed at providing accurate and compliant leasing offers to customers.\n\n## Objectives\n- Validate the correct calculation of monthly rent based on various pricing parameters.\n- Ensure that the quotation includes essential financial information such as residual value and total leasing cost.\n- Confirm that the system properly rejects invalid input with clear error messages.\n\n## Scope\n### In-Scope\n- Calculation of monthly rent based on vehicle price, mileage, and duration.\n- Inclusion of residual value and total lease cost in the quotation.\n- Validation of user inputs for lease quotation creation.\n\n### Out-of-Scope\n- User Interface (UI) testing.\n- Integration with external vehicle databases.\n\n## Test Strategy\n1. **Functional Testing**:\n   - Verify the calculations for monthly rent, residual value, and total lease cost.\n   - Test input validation for various pricing parameters.\n\n2. **Regression Testing**:\n   - Ensure that existing functionality is not affected by new changes, particularly focusing on existing tests related to lease quotation.\n\n3. **Security Testing**:\n   - Confirm that invalid inputs cannot lead to any security breaches or vulnerabilities.\n\n4. **Performance Testing**:\n   - Assess the system's response time when processing lease quotations.\n\n## Test Environment\n- The test will be conducted in a staging environment that mirrors production settings.\n\n## Resources\n- QA Engineers\n- Test Management Tool (Xray)\n- Access to the backend services and database\n\n## Timeline\n- Test preparation: 1 week\n- Test execution: 2 weeks\n- Reporting and closure: 1 week\n\n## Acceptance Criteria\n- All functional tests must pass.\n- Validations should work as expected and appropriately handle invalid input.\n- Residual values and total costs must be accurately calculated and displayed in the quotation.\n\n## Risks and Mitigations\n- **Risk**: Potential for bugs in calculation logic.\n  **Mitigation**: Thorough testing of calculations with a variety of scenarios.\n  \n- **Risk**: Changes in the validation logic that may impact user experience.\n  **Mitigation**: Ensure comprehensive test cases for all validation scenarios.",
+  "suggestions": [
+    {
+      "title": "Verify correct monthly rent calculation for various vehicle prices",
+      "priority": "HIGH",
+      "type": "functional",
+      "given": "a vehicle price of $30,000, mileage of 12,000, and duration of 36 months",
+      "when": "the dealer user submits the lease quotation",
+      "then": "the system calculates and displays the correct monthly rent",
+      "mapped_existing_test_key": "TEST-US-401-1"
+    },
+    {
+      "title": "Ensure total cost of leasing is calculated correctly",
+      "priority": "HIGH",
+      "type": "functional",
+      "given": "a vehicle price of $30,000, duration of 36 months, and a monthly rent of $500",
+      "when": "the dealer user views the lease quotation",
+      "then": "the total cost displayed should be $18,000",
+      "mapped_existing_test_key": null
+    },
+    {
+      "title": "Reject quotation submission with negative mileage",
+      "priority": "HIGH",
+      "type": "functional",
+      "given": "the dealer user inputs a negative mileage",
+      "when": "the dealer user submits the lease quotation",
+      "then": "the system displays a clear error message indicating that mileage cannot be negative",
+      "mapped_existing_test_key": "TEST-US-401-2"
+    },
+    {
+      "title": "Ensure residual value is calculated based on input parameters",
+      "priority": "MEDIUM",
+      "type": "functional",
+      "given": "vehicle price of $30,000 and standard depreciation rate",
+      "when": "the dealer user checks the lease quotation",
+      "then": "the system calculates and correctly displays the residual value",
+      "mapped_existing_test_key": "TEST-US-401-3"
+    },
+    {
+      "title": "Display business message for invalid down payment",
+      "priority": "MEDIUM",
+      "type": "functional",
+      "given": "the dealer user inputs a down payment that exceeds vehicle price",
+      "when": "the dealer user submits the lease quotation",
+      "then": "the system displays a clear business message about invalid down payment",
+      "mapped_existing_test_key": null
+    }
+  ],
+  "raw_context": {
+    "issue": {
+      "key": "US-401",
+      "summary": "Create a vehicle lease quotation with pricing parameters",
+      "description": "As a dealer user, I want to create a lease quotation by selecting vehicle, mileage, duration and down payment, so that I can propose a compliant offer to the customer.",
+      "acceptance_criteria": "AC1: The system calculates monthly rent based on vehicle price, mileage and duration.\nAC2: The quotation must include residual value and total cost of leasing.\nAC3: Invalid pricing parameters must be rejected with a clear business message."
+    },
+    "tests": [
+      {
+        "key": "TEST-US-401-1",
+        "summary": "Create lease quote with valid pricing inputs",
+        "steps": "Given a dealer user\nWhen mileage and duration are provided\nThen a quotation is created with monthly rent",
+        "tags": [
+          "functional",
+          "api"
+        ]
+      },
+      {
+        "key": "TEST-US-401-2",
+        "summary": "Reject quotation with invalid mileage",
+        "steps": "Given invalid mileage\nWhen creating a quotation\nThen an error message is returned",
+        "tags": [
+          "functional"
+        ]
+      },
+      {
+        "key": "TEST-US-401-3",
+        "summary": "Verify residual value calculation",
+        "steps": "Given a quotation\nWhen pricing is calculated\nThen residual value is included",
+        "tags": [
+          "regression",
+          "data"
+        ]
+      },
+      {
+        "key": "TEST-US-401-4",
+        "summary": "Outdated: Quote creation without residual value",
+        "steps": "Old pricing flow without residual value",
+        "tags": [
+          "legacy"
+        ]
+      }
+    ],
+    "changes": [
+      {
+        "file_path": "backend/routes/quotation_routes.py",
+        "summary": "Add lease quotation creation endpoint",
+        "diff_excerpt": "POST /quotations now accepts mileage and duration parameters"
+      },
+      {
+        "file_path": "backend/services/pricing_service.py",
+        "summary": "Fix pricing calculation when mileage changes",
+        "diff_excerpt": "Adjusted residual value formula"
+      },
+      {
+        "file_path": "backend/store/quotation_store.py",
+        "summary": "Persist quotation pricing details",
+        "diff_excerpt": "Added fields for total lease cost"
+      },
+      {
+        "file_path": "backend/utils/validation.py",
+        "summary": "Refactor input validation for pricing parameters",
+        "diff_excerpt": "Renamed helper functions"
+      }
+    ]
+  }
+}

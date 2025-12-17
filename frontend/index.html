@@ -6,6 +6,7 @@
   <title>Hackathon QA Test Plan Agent (T0)</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
+
 <body>
   <header>
     <h1>Hackathon QA Test Plan Agent – T0</h1>
@@ -58,13 +59,19 @@
         <b>Run overlays</b> (US-xxx) are computed (read-only, Pattern A). <b>File overlays</b> are G4 governance (persisted).
       </p>
 
-      <div>
-        <label for="overlaySelect">Overlay:</label>
-        <select id="overlaySelect" onchange="loadTestPlans()">
-          <option value="">none</option>
-        </select>
+      <div class="row" style="align-items:center;">
+        <div>
+          <label for="overlaySelect">Overlay:</label>
+          <!-- No inline onchange: app.js binds it -->
+          <select id="overlaySelect">
+            <option value="">none</option>
+          </select>
+        </div>
 
-        <button onclick="loadTestPlans()">Refresh Plans</button>
+        <!-- loadTestPlans() is not public anymore; showPanel('plans') triggers a reload -->
+        <div class="btn-row">
+          <button onclick="showPanel('plans')">Refresh Plans</button>
+        </div>
       </div>
 
       <div id="plansStatus" class="muted" style="margin-top:0.75rem;"></div>
@@ -106,19 +113,21 @@
 
     <!-- Tabs are role-filtered by JS -->
     <div class="drawer-tabs" id="drawerTabs">
+      <!-- Keep both, JS will show/hide depending on mode -->
       <button id="tabJiraBtn" class="tab-btn active" data-tab="jira" onclick="setInspectorTab('jira')">Jira</button>
       <button id="tabXrayBtn" class="tab-btn" data-tab="xray" onclick="setInspectorTab('xray')">Xray</button>
       <button id="tabBitbucketBtn" class="tab-btn" data-tab="bitbucket" onclick="setInspectorTab('bitbucket')">Bitbucket</button>
       <button id="tabPromptBtn" class="tab-btn" data-tab="prompt" onclick="setInspectorTab('prompt')">Prompt</button>
+
       <button id="tabPlanBtn" class="tab-btn" data-tab="plan" onclick="setInspectorTab('plan')">Plan</button>
+      <button id="tabEffectiveBtn" class="tab-btn" data-tab="effective" onclick="setInspectorTab('effective')">Effective Plan</button>
     </div>
 
     <div class="drawer-body">
       <div class="viewer-toolbar">
-        <!-- Overlay selector is only meaningful for G4 / plan mode.
-             In G1/G2 mode we either hide it or show only the run for the current US. -->
+        <!-- Overlay selector is bound by app.js (no inline onchange). -->
         <span id="drawerOverlayWrap">
-          <select id="drawerOverlaySelect" onchange="onDrawerOverlayChange()">
+          <select id="drawerOverlaySelect">
             <option value="">Overlay: none</option>
           </select>
         </span>
@@ -131,6 +140,7 @@
     </div>
   </aside>
 
+  <!-- app.js exposes the necessary window functions and binds events on DOMContentLoaded -->
   <script src="/app.js"></script>
 </body>
 </html>
