@@ -1,7 +1,7 @@
 {
   "prompt_hash": "sha256:8915168a8699846fd954ed413838a7ede0955c0dcaa4997322c5f360e8473abe",
   "prompt_id": "g1/prompt",
-  "created_at": "2025-12-17T16:30:37+01:00",
+  "created_at": "2025-12-18T00:52:41+01:00",
   "system_prompt": "You are a senior QA engineer.\n\nYour task is to generate TWO outputs:\n\n1) A detailed test plan in Markdown.\n2) A list of NEW test case suggestions in JSON.\n\nIMPORTANT RULES:\n- Output MUST follow the exact format below.\n- The JSON MUST be valid and parsable.\n- The JSON MUST match this schema:\n\n[\n  {\n    \"title\": string,\n    \"priority\": \"HIGH\" | \"MEDIUM\" | \"LOW\",\n    \"type\": \"functional\" | \"regression\" | \"security\" | \"performance\",\n    \"given\": string,\n    \"when\": string,\n    \"then\": string,\n    \"mapped_existing_test_key\": string | null\n  }\n]\n\nFORMAT (STRICT):\n\n---MARKDOWN---\n<markdown content>\n\n---SUGGESTIONS_JSON---\n<json array>",
   "user_prompt": "JIRA ISSUE\n----------\nKey: US-405\nSummary: Generate and sign leasing contract with document pack\nDescription:\nAs a customer, I want to sign my leasing contract digitally, so that the agreement is legally binding.\n\nAcceptance Criteria:\nAC1: Contract PDF pack is generated from the quotation.\nAC2: Digital signature workflow must complete successfully.\nAC3: Signed contract is archived.\n\nEXISTING XRAY TESTS\n------------------\n['TEST-US-405-1: Generate contract PDF pack', 'TEST-US-405-2: Complete digital signature workflow']\n\nCODE CHANGES\n------------\n['backend/services/contract_service.py', 'backend/services/signature_service.py']\n\nInstructions:\n- Reuse existing tests where relevant.\n- Propose NEW test cases only in the JSON suggestions.\n- Be precise and actionable."
 }

@@ -1,47 +1,71 @@
 {
   "active": {
     "prompt_id": "g1/prompt",
-    "latest_hash": "sha256:6df317e4d541abafa76e39a9f541f243beb7ec44be717bd11f53f730064c57d2"
+    "latest_hash": "sha256:8915168a8699846fd954ed413838a7ede0955c0dcaa4997322c5f360e8473abe"
   },
   "prompts": {
-    "sha256:9663e903824c01c384704389ecf6026a241431dfa36e4f67ace112a94835aa78": {
-      "created_at": "2025-12-17T15:38:48+01:00",
+    "sha256:fd1c34ed52d7bef2955358b270b12a6fe6a94c5663a2deb6e7600815c97d5d04": {
+      "created_at": "2025-12-17T23:34:53+01:00",
       "label": "g1/prompt",
       "source": "code",
       "files": [
-        "C:\\Developpement\\hackathon\\mocks\\prompts\\prompts\\9663e903824c01c384704389ecf6026a241431dfa36e4f67ace112a94835aa78.json"
+        "C:\\Developpement\\hackathon\\mocks\\prompts\\prompts\\fd1c34ed52d7bef2955358b270b12a6fe6a94c5663a2deb6e7600815c97d5d04.json"
       ]
     },
-    "sha256:fa49ce91099a489c0611d7414bcd723a89eb1e55378fdf226eb13a8ec0dbf5fc": {
-      "created_at": "2025-12-17T16:25:35+01:00",
+    "sha256:12c4b4aa9a852edddc9acd11f39615406b78cd6be3b46559adc2ec88db29726e": {
+      "created_at": "2025-12-17T23:36:08+01:00",
       "label": "g1/prompt",
       "source": "code",
       "files": [
-        "C:\\Developpement\\hackathon\\mocks\\prompts\\prompts\\fa49ce91099a489c0611d7414bcd723a89eb1e55378fdf226eb13a8ec0dbf5fc.json"
+        "C:\\Developpement\\hackathon\\mocks\\prompts\\prompts\\12c4b4aa9a852edddc9acd11f39615406b78cd6be3b46559adc2ec88db29726e.json"
+      ]
+    },
+    "sha256:494a3af10e19b3d840c23aecffb57ff550520a2e031b9f853e6261348af2e7a8": {
+      "created_at": "2025-12-17T23:39:15+01:00",
+      "label": "g1/prompt",
+      "source": "code",
+      "files": [
+        "C:\\Developpement\\hackathon\\mocks\\prompts\\prompts\\494a3af10e19b3d840c23aecffb57ff550520a2e031b9f853e6261348af2e7a8.json"
+      ]
+    },
+    "sha256:705f4f5366f0932285e189a890d67952836620d6466d12a10358d6718c93bc2f": {
+      "created_at": "2025-12-17T23:40:26+01:00",
+      "label": "g1/prompt",
+      "source": "code",
+      "files": [
+        "C:\\Developpement\\hackathon\\mocks\\prompts\\prompts\\705f4f5366f0932285e189a890d67952836620d6466d12a10358d6718c93bc2f.json"
+      ]
+    },
+    "sha256:fa96b4c06ec3a7e470e4172077e1fc51f5d38cbb80893415c355f9a496d1066b": {
+      "created_at": "2025-12-18T00:11:54+01:00",
+      "label": "g1/prompt",
+      "source": "code",
+      "files": [
+        "C:\\Developpement\\hackathon\\mocks\\prompts\\prompts\\fa96b4c06ec3a7e470e4172077e1fc51f5d38cbb80893415c355f9a496d1066b.json"
+      ]
+    },
+    "sha256:06471326c2e62c743767d2e529d4c3d0e93e25a4b537d233aa0febbf94bb7782": {
+      "created_at": "2025-12-18T00:24:10+01:00",
+      "label": "g1/prompt",
+      "source": "code",
+      "files": [
+        "C:\\Developpement\\hackathon\\mocks\\prompts\\prompts\\06471326c2e62c743767d2e529d4c3d0e93e25a4b537d233aa0febbf94bb7782.json"
+      ]
+    },
+    "sha256:176a1d430c3bb652f5798d7a6f1db6eddbb10c746e87daf3faa230b51c3f0aa8": {
+      "created_at": "2025-12-18T00:51:04+01:00",
+      "label": "g1/prompt",
+      "source": "code",
+      "files": [
+        "C:\\Developpement\\hackathon\\mocks\\prompts\\prompts\\176a1d430c3bb652f5798d7a6f1db6eddbb10c746e87daf3faa230b51c3f0aa8.json"
       ]
     },
     "sha256:8915168a8699846fd954ed413838a7ede0955c0dcaa4997322c5f360e8473abe": {
-      "created_at": "2025-12-17T16:30:37+01:00",
+      "created_at": "2025-12-18T00:52:41+01:00",
       "label": "g1/prompt",
       "source": "code",
       "files": [
         "C:\\Developpement\\hackathon\\mocks\\prompts\\prompts\\8915168a8699846fd954ed413838a7ede0955c0dcaa4997322c5f360e8473abe.json"
-      ]
-    },
-    "sha256:230a9b550eefbef39c6dd344b536b844e2ec3b3267de8f704b2de2d4e7dd7b8c": {
-      "created_at": "2025-12-17T17:45:51+01:00",
-      "label": "g1/prompt",
-      "source": "code",
-      "files": [
-        "C:\\Developpement\\hackathon\\mocks\\prompts\\prompts\\230a9b550eefbef39c6dd344b536b844e2ec3b3267de8f704b2de2d4e7dd7b8c.json"
-      ]
-    },
-    "sha256:6df317e4d541abafa76e39a9f541f243beb7ec44be717bd11f53f730064c57d2": {
-      "created_at": "2025-12-17T22:21:21+01:00",
-      "label": "g1/prompt",
-      "source": "code",
-      "files": [
-        "C:\\Developpement\\hackathon\\mocks\\prompts\\prompts\\6df317e4d541abafa76e39a9f541f243beb7ec44be717bd11f53f730064c57d2.json"
       ]
     }
   }

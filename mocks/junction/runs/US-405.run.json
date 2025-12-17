@@ -1,6 +1,6 @@
 {
   "jira_key": "US-405",
-  "generated_at": "2025-12-17T16:30:37+01:00",
+  "generated_at": "2025-12-18T00:52:41+01:00",
   "provenance": {
     "prompt_id": "g1/prompt",
     "prompt_hash": "sha256:8915168a8699846fd954ed413838a7ede0955c0dcaa4997322c5f360e8473abe",
@@ -9,51 +9,51 @@
     "provider": "mock",
     "model": ""
   },
-  "markdown": "# Test Plan for US-405: Generate and Sign Leasing Contract with Document Pack\n\n## Introduction\nThis test plan outlines the strategy for testing the new feature of generating and signing leasing contracts digitally as per JIRA issue US-405.\n\n## Test Objectives\n- Ensure that the contract PDF pack is generated accurately from the quotation.\n- Validate that the digital signature workflow completes successfully.\n- Confirm that the signed contract is archived correctly.\n\n## Test Scope\n- **In-Scope**: Generation of contract PDF, digital signature workflow, archiving of the signed contract.\n- **Out-of-Scope**: Other features not related to contract generation and signing.\n\n## Resources\n- QA Team Members\n- Development Team\n- Testing Environments (Staging, Production)\n\n## Test Environment\n- Staging Environment\n  - Backend: [backend/services/contract_service.py](#)\n  - Backend: [backend/services/signature_service.py](#)\n\n## Test Deliverables\n- Test results documentation\n- Bug reports (if any)\n- Final test summary report\n\n## Testing Strategy\n1. **Manual Testing**: Perform manual test cases for contract generation and signing workflows.\n2. **Automated Testing**: Leverage existing automated tests where applicable.\n   \n## Test Schedule\n| Task                        | Assigned To | Start Date | End Date   |\n|-----------------------------|-------------|------------|------------|\n| Review requirements         | QA Team     | TBD        | TBD        |\n| Execute existing test cases | QA Team     | TBD        | TBD        |\n| Develop new test cases      | QA Team     | TBD        | TBD        |\n| Regression testing          | QA Team     | TBD        | TBD        |\n\n## Risk Management\n- Potential risks include issues during contract generation and digital signing. Adequate mitigation strategies will be put in place, including thorough testing and rollback mechanisms.\n\n## Acceptance Criteria\n- **AC1**: Contract PDF pack is generated from the quotation.\n- **AC2**: Digital signature workflow must complete successfully.\n- **AC3**: Signed contract is archived.\n\n## Exit Criteria\n- All test scenarios must pass or have documented exceptions.\n- Regression tests must be conducted to ensure no other features are broken.",
+  "markdown": "# Test Plan for US-405: Generate and Sign Leasing Contract with Document Pack\n\n## Introduction\nThis test plan outlines the strategy for testing the functionality of generating and signing a leasing contract digitally. The objective is to ensure the contract is generated accurately, the digital signature is applied properly, and the signed document is archived successfully.\n\n## Objectives\n- Verify that the contract PDF pack is generated as expected.\n- Ensure the digital signature workflow functions without issues.\n- Confirm that the signed contract is archived correctly.\n\n## Scope\nThe scope of this testing includes the backend services related to contract generation and signing, utilizing the modified code in `contract_service.py` and `signature_service.py`.\n\n## Existing Tests\n- **TEST-US-405-1**: Generate contract PDF pack\n- **TEST-US-405-2**: Complete digital signature workflow\n\n## Testing Approach\n1. **Functional Testing**\n   - Validate each acceptance criterion (AC1, AC2, AC3).\n   - Test various scenarios for contract generation and signing.\n\n2. **Integration Testing**\n   - Ensure proper interaction between the contract generation and signature services.\n\n3. **Regression Testing**\n   - Run existing tests to ensure they still pass with the new code changes.\n\n4. **Performance Testing**\n   - Measure the time taken for contract generation and signing processes.\n\n## Acceptance Criteria Testing\n- **AC1**: Verify that a contract PDF pack is generated from a valid quotation.\n- **AC2**: Confirm that the digital signature workflow completes successfully for all users.\n- **AC3**: Ensure that the signed contract is stored in the archive and can be retrieved.\n\n## Test Environment\n- Use the testing environment with the latest version of the application.\n- Ensure all necessary dependencies are properly installed.\n\n## Schedule\nTesting should commence immediately after development is complete and last for approximately one week.\n\n## Dependencies\n- Access to the database with test data.\n- Availability of services for testing contract generation and signing.\n\n## Risks\n- Possible downtime of services due to deployment of new changes.\n- Issues with the signature service may hinder testing.\n\n## Reporting\nTest results will be reported in the following formats:\n- Daily status updates during the testing phase.\n- A comprehensive test report at the conclusion of testing.\n\n## Conclusion\nThis test plan aims to ensure that the new features in US-405 are working as intended, providing a seamless experience for customers when signing their leasing contracts digitally.",
   "suggestions": [
     {
-      "title": "Validate contract PDF generation with various quotation inputs",
+      "title": "Verify error handling for invalid quotations during PDF generation",
       "priority": "HIGH",
       "type": "functional",
-      "given": "A valid quotation input",
-      "when": "The user requests the contract PDF pack",
-      "then": "The system generates the correct contract PDF pack",
+      "given": "A customer submits an invalid quotation",
+      "when": "The contract PDF pack generation is triggered",
+      "then": "An appropriate error message is returned",
+      "mapped_existing_test_key": null
+    },
+    {
+      "title": "Check the format of the generated contract PDF",
+      "priority": "MEDIUM",
+      "type": "functional",
+      "given": "A valid quotation is submitted",
+      "when": "The contract PDF pack is generated",
+      "then": "The PDF adheres to the specified format and contains all relevant details",
       "mapped_existing_test_key": "TEST-US-405-1"
     },
     {
-      "title": "Ensure digital signature process is accessible and user-friendly",
-      "priority": "MEDIUM",
+      "title": "Validate the retention of digital signature",
+      "priority": "HIGH",
       "type": "functional",
-      "given": "The user has a valid contract to sign",
-      "when": "The user initiates the digital signature workflow",
-      "then": "The user is guided through an intuitive signature process",
+      "given": "A contract is signed digitally",
+      "when": "The signed contract is retrieved",
+      "then": "The digital signature should be present and valid in the document",
       "mapped_existing_test_key": "TEST-US-405-2"
     },
     {
-      "title": "Verify successful archiving of signed contracts",
-      "priority": "HIGH",
-      "type": "functional",
-      "given": "A contract has been successfully signed",
-      "when": "The archiving process is initiated",
-      "then": "The signed contract is stored in the archive system",
-      "mapped_existing_test_key": null
-    },
-    {
-      "title": "Test digital signature expiration behavior",
-      "priority": "LOW",
-      "type": "security",
-      "given": "A signed contract with an expired digital signature",
-      "when": "A request is made to retrieve the signed contract",
-      "then": "The system should not allow the signed contract to be validated",
-      "mapped_existing_test_key": null
-    },
-    {
-      "title": "Performance test for contract PDF generation under load",
+      "title": "Test archive retrieval for signed contracts",
       "priority": "MEDIUM",
+      "type": "functional",
+      "given": "A signed contract is archived",
+      "when": "The contract is retrieved from the archive",
+      "then": "The correct signed contract should be returned",
+      "mapped_existing_test_key": null
+    },
+    {
+      "title": "Measure performance of contract generation and signing",
+      "priority": "LOW",
       "type": "performance",
-      "given": "Multiple users requesting contract generation",
-      "when": "Users initiate contract PDF generation simultaneously",
-      "then": "The system should generate all requests without failures within acceptable time limits",
+      "given": "A normal load of user requests",
+      "when": "Contracts are generated and signed concurrently",
+      "then": "The system should handle the load without significant delays",
       "mapped_existing_test_key": null
     }
   ],

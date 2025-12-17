@@ -16,21 +16,21 @@
   let API_BASE = ""; // resolved at runtime
 
   async function resolveApiBase() {
-  const origin = window.location.origin;
-  const host = window.location.hostname || "127.0.0.1";
+    const origin = window.location.origin;
+    const host = window.location.hostname || "127.0.0.1";
 
-  // Probe the API endpoint, not /health
-  try {
-    const r = await fetch(`${origin}/api/test-plans/overlays`, { method: "GET" });
-    if (r.ok) {
-      API_BASE = ""; // same-origin works (proxy present)
-      return;
-    }
-  } catch (_) {}
+    // Probe the API endpoint, not /health
+    try {
+      const r = await fetch(`${origin}/api/test-plans/overlays`, { method: "GET" });
+      if (r.ok) {
+        API_BASE = ""; // same-origin works (proxy present)
+        return;
+      }
+    } catch (_) {}
 
-  // Fallback to backend port
-  API_BASE = `http://${host}:8000`;
-}
+    // Fallback to backend port
+    API_BASE = `http://${host}:8000`;
+  }
 
   // Debug helper (always current value)
   function getApiBase() {
@@ -127,11 +127,43 @@
   };
 
   // ---------------------------------------------------------------------------
+  // Overlay UI labels (Option B — label != filename)
+  // ---------------------------------------------------------------------------
+  const OVERLAY_UI_LABELS = {
+    coreA: "Core IT – Conservative Governance",
+    governanceStrict: "Compliance / Audit Strict Mode",
+    promptA: "Prompt A – Baseline Governance Workspace",
+    promptB: "Prompt B – Alternative Governance Workspace",
+  };
+
+  function overlayUiLabelFromName(name, kind) {
+    const n = normOverlay(name);
+    if (!n) return "";
+
+    // Prefer explicit mapping for known file overlays
+    if (OVERLAY_UI_LABELS[n]) {
+      return OVERLAY_UI_LABELS[n] + (kind ? ` (${String(kind).toLowerCase()})` : "");
+    }
+
+    // For run overlays, show name as-is (already includes context like sha256)
+    // For other unknown overlays, fallback to raw name (+ kind)
+    return kind ? `${n} (${String(kind).toLowerCase()})` : n;
+  }
+
+  function overlayDisplayLabel(overlayObj) {
+    if (!overlayObj) return "";
+    const name = overlayObj.name || "";
+    const kind = overlayObj.kind || "";
+    // Backend might send label; but we want stable UI mapping
+    return overlayUiLabelFromName(name, kind);
+  }
+
+  // ---------------------------------------------------------------------------
   // Overlays cache
   // ---------------------------------------------------------------------------
   const OVERLAYS_CACHE = {
     loaded: false,
-    list: [], // [{name, kind, label}]
+    list: [], // [{name, kind, label, label_ui}]
     byName: {}, // name -> overlay
   };
 
@@ -142,11 +174,20 @@
       const payload = await r.json();
       const overlays = Array.isArray(payload?.data) ? payload.data : [];
 
-      OVERLAYS_CACHE.list = overlays;
+      // Normalize + attach label_ui deterministically (frontend-owned)
+      OVERLAYS_CACHE.list = overlays.map((o) => {
+        const oo = { ...(o || {}) };
+        oo.name = normOverlay(oo.name);
+        oo.kind = normOverlay(oo.kind);
+        oo.label_ui = overlayDisplayLabel(oo);
+        return oo;
+      });
+
       OVERLAYS_CACHE.byName = {};
-      overlays.forEach((o) => {
+      OVERLAYS_CACHE.list.forEach((o) => {
         if (o?.name) OVERLAYS_CACHE.byName[o.name] = o;
       });
+
       OVERLAYS_CACHE.loaded = true;
     } catch (e) {
       console.warn("Failed to load overlays cache:", e);
@@ -367,7 +408,7 @@
       if (!o?.name) continue;
       const opt = document.createElement("option");
       opt.value = o.name;
-      opt.textContent = o.label || o.name;
+      opt.textContent = o.label_ui || o.label || o.name; // << enforced UI label
       topSel.appendChild(opt);
     }
 
@@ -391,9 +432,10 @@
     wrap.style.display = "inline-block";
     drawerSel.innerHTML = "";
 
+    const o = OVERLAYS_CACHE.byName[runName];
     const opt = document.createElement("option");
     opt.value = runName;
-    opt.textContent = `Run: ${OVERLAYS_CACHE.byName[runName].label || runName}`;
+    opt.textContent = `Run: ${o?.label_ui || o?.label || runName}`;
     drawerSel.appendChild(opt);
 
     drawerSel.value = runName;
@@ -417,7 +459,7 @@
       if (!o?.name) continue;
       const opt = document.createElement("option");
       opt.value = o.name;
-      opt.textContent = `Overlay: ${o.label || o.name}`;
+      opt.textContent = `Overlay: ${o.label_ui || o.label || o.name}`;
       drawerSel.appendChild(opt);
     }
 
@@ -448,7 +490,6 @@
     statusEl.textContent = overlay ? `Loading plans with overlay=${overlay}...` : "Loading baseline plans...";
 
     try {
-      // IMPORTANT: don't send ?overlay= (empty)
       const url = overlay
         ? `${API_BASE}/api/test-plans?overlay=${encodeURIComponent(overlay)}`
         : `${API_BASE}/api/test-plans`;
@@ -641,7 +682,6 @@
     const r = await fetch(url);
     const txt = await r.text();
     if (!r.ok) {
-      // Preserve server message (often JSON), but don't crash UI
       return { errors: [{ message: `HTTP ${r.status}`, detail: txt }], meta: { url, status: r.status }, data: null };
     }
     try {
@@ -787,8 +827,6 @@
 
     try {
       const overlay = normOverlay(INSPECTOR_STATE.overlay);
-
-      // IMPORTANT: don't send ?overlay= (empty)
       const url = overlay
         ? `${API_BASE}/api/test-plans/${encodeURIComponent(planKey)}?overlay=${encodeURIComponent(overlay)}`
         : `${API_BASE}/api/test-plans/${encodeURIComponent(planKey)}`;
@@ -817,8 +855,6 @@
     }
 
     const overlay = normOverlay($("drawerOverlaySelect")?.value);
-
-    // IMPORTANT: don't send ?overlay= (empty)
     const url = overlay
       ? `${API_BASE}/api/test-plans/${encodeURIComponent(planKey)}/effective?overlay=${encodeURIComponent(overlay)}`
       : `${API_BASE}/api/test-plans/${encodeURIComponent(planKey)}/effective`;
@@ -857,7 +893,7 @@
 
   async function applyRunToFileOverlay() {
     const planKey = INSPECTOR_STATE.planKey;
-    const currentOverlay = normOverlay(INSPECTOR_STATE.overlay); // should be run overlay in this action
+    const currentOverlay = normOverlay(INSPECTOR_STATE.overlay);
     const targetSel = $("applyTargetOverlay");
     const targetOverlay = normOverlay(targetSel?.value || pickDefaultFileOverlayName());
 
@@ -976,16 +1012,10 @@
     const cache = INSPECTOR_STATE.cache;
     if (!el) return;
 
-    // ---------------------------
-    // Issue mode (text)
-    // ---------------------------
     if (INSPECTOR_MODE === "issue") {
       el.classList.remove("inspector-html");
-
-      if (tab === "jira") {
-        el.textContent = prettyJson(cache.jira);
-        return;
-      }
+      if (tab === "jira") return void (el.textContent = prettyJson(cache.jira));
+      if (tab === "bitbucket") return void (el.textContent = prettyJson(cache.bitbucket));
 
       if (tab === "xray") {
         const payload = cache.xray || {};
@@ -1038,11 +1068,6 @@
         return;
       }
 
-      if (tab === "bitbucket") {
-        el.textContent = prettyJson(cache.bitbucket);
-        return;
-      }
-
       if (tab === "prompt") {
         const payload = cache.prompt || {};
         const d = payload?.data || {};
@@ -1069,16 +1094,12 @@
     // Plan mode
     // ---------------------------
     if (INSPECTOR_MODE === "plan") {
-      // Effective (text)
       if (tab === "effective") {
         el.classList.remove("inspector-html");
 
         const payload = cache.effective || {};
         const d = payload?.data || null;
-        if (!d) {
-          el.textContent = "No effective plan loaded.";
-          return;
-        }
+        if (!d) return void (el.textContent = "No effective plan loaded.");
 
         const lines = [];
         lines.push(`=== EFFECTIVE TEST PLAN for ${d.plan_key || INSPECTOR_STATE.planKey || ""} ===`);
@@ -1098,7 +1119,6 @@
 
         lines.push("NOTE:");
         lines.push("- Keys like 'CAND-...' represent AI candidates (tests to create), not existing XRAY test keys.");
-        lines.push("- If baseline-skip governance exists, ensure your backend effective computation applies it.");
         lines.push("");
 
         lines.push("=== TESTS TO EXECUTE (effective) ===");
@@ -1128,12 +1148,8 @@
         return;
       }
 
-      // Plan HTML
       el.classList.add("inspector-html");
-      if (tab !== "plan") {
-        el.innerHTML = "<div class='muted'>Select Plan tab.</div>";
-        return;
-      }
+      if (tab !== "plan") return void (el.innerHTML = "<div class='muted'>Select Plan tab.</div>");
       el.innerHTML = renderPlanHtml(cache.plan);
       return;
     }
@@ -1142,7 +1158,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Plan HTML renderer (unchanged except minor normalizations)
+  // Plan HTML renderer
   // ---------------------------------------------------------------------------
   function renderPlanHtml(planPayload) {
     if (!planPayload) return `<div class="muted">No plan loaded.</div>`;
@@ -1158,12 +1174,15 @@
     const baselineTests = Array.isArray(data?.tests) ? data.tests : [];
     const jiraKeys = Array.isArray(data?.jira_keys) ? data.jira_keys : [];
 
+    const overlayObj = OVERLAYS_CACHE.byName[overlayName] || { name: overlayName, kind: overlayKind };
+    const overlayLabelUi = overlayDisplayLabel(overlayObj) || overlayName || "(none)";
+
     const header = `
       <div class="inspector-block">
         <div class="inspector-title">TEST PLAN: ${esc(data?.key || "")}</div>
         <div class="inspector-subtitle">${esc(data?.summary || "")}</div>
         <div style="margin-top:0.6rem;">
-          <span class="pill pill-meta">Overlay: ${esc(overlayName || "(none)")}</span>
+          <span class="pill pill-meta">Overlay: ${esc(overlayLabelUi)}</span>
           <span class="pill pill-meta">kind=${esc(overlayKind || "(none)")}</span>
           <span class="pill pill-meta">Governance: ${esc(gov?.status || "NOT_ANALYZED")}</span>
           <span class="pill pill-meta">source=${esc(gov?.source || "baseline")}</span>
@@ -1188,7 +1207,6 @@
       </div>
     `;
 
-    // Run overlay (read-only) + Apply (T0+)
     if (overlayKind === "run") {
       const candidates = Array.isArray(ov?.candidate_tests) ? ov.candidate_tests : [];
 
@@ -1199,10 +1217,10 @@
           ? fileOverlays
               .map((o) => {
                 const selected = o.name === defaultTarget ? " selected" : "";
-                return `<option value="${esc(o.name)}"${selected}>${esc(o.label || o.name)}</option>`;
+                return `<option value="${esc(o.name)}"${selected}>${esc(o.label_ui || o.label || o.name)}</option>`;
               })
               .join("")
-          : `<option value="promptA" selected>promptA (file)</option>`;
+          : `<option value="promptA" selected>${esc(overlayUiLabelFromName("promptA", "file"))}</option>`;
 
       const applyBlock = `
         <div class="inspector-block">
@@ -1249,7 +1267,6 @@
       return header + baseline + applyBlock + list;
     }
 
-    // File overlay (persisted) with decisions
     if (overlayKind === "file") {
       const aiCandidates = Array.isArray(ov?.ai_candidates) ? ov.ai_candidates : [];
       const execTests = Array.isArray(ov?.existing_tests_to_execute) ? ov.existing_tests_to_execute : [];
